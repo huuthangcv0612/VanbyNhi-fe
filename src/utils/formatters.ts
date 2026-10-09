@@ -1,0 +1,206 @@
+import type {
+  UserRole,
+  ClassStatus,
+  SessionStatus,
+  AttendanceStatus,
+  TuitionStatus,
+  AssignmentStatus,
+} from '@/types/common.types';
+
+/**
+ * Định dạng tiền tệ VND: 1.500.000 ₫
+ */
+export function formatCurrency(amount: number | string | null | undefined): string {
+  if (amount === null || amount === undefined || amount === '') return '0 ₫';
+  const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+  if (isNaN(num)) return '0 ₫';
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND',
+    maximumFractionDigits: 0,
+  }).format(num);
+}
+
+/**
+ * Định dạng ngày giờ: DD/MM/YYYY HH:mm
+ */
+export function formatDateTime(date: string | Date | null | undefined): string {
+  if (!date) return '-';
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return '-';
+  return new Intl.DateTimeFormat('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(d);
+}
+
+/**
+ * Định dạng ngày: DD/MM/YYYY
+ */
+export function formatDate(date: string | Date | null | undefined): string {
+  if (!date) return '-';
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return '-';
+  return new Intl.DateTimeFormat('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(d);
+}
+
+/**
+ * Nhãn và màu cho vai trò người dùng (UserRole)
+ */
+export function getRoleMeta(role: UserRole): { label: string; badgeClass: string } {
+  switch (role) {
+    case 'ADMIN':
+      return {
+        label: 'Quản trị viên',
+        badgeClass: 'bg-purple-100 text-purple-800 border-purple-200',
+      };
+    case 'TEACHER':
+      return {
+        label: 'Giáo viên',
+        badgeClass: 'bg-blue-100 text-blue-800 border-blue-200',
+      };
+    case 'STUDENT':
+      return {
+        label: 'Học sinh',
+        badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+      };
+    default:
+      return {
+        label: role,
+        badgeClass: 'bg-slate-100 text-slate-800 border-slate-200',
+      };
+  }
+}
+
+/**
+ * Nhãn và màu trạng thái lớp học (ClassStatus)
+ */
+export function getClassStatusMeta(status: ClassStatus): { label: string; badgeClass: string } {
+  switch (status) {
+    case 'ACTIVE':
+      return {
+        label: 'Đang mở',
+        badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+      };
+    case 'INACTIVE':
+      return {
+        label: 'Tạm dừng',
+        badgeClass: 'bg-amber-100 text-amber-800 border-amber-200',
+      };
+    case 'COMPLETED':
+      return {
+        label: 'Đã kết thúc',
+        badgeClass: 'bg-slate-100 text-slate-800 border-slate-200',
+      };
+  }
+}
+
+/**
+ * Nhãn và màu trạng thái buổi học (SessionStatus)
+ */
+export function getSessionStatusMeta(status: SessionStatus): { label: string; badgeClass: string } {
+  switch (status) {
+    case 'SCHEDULED':
+      return {
+        label: 'Đã lên lịch',
+        badgeClass: 'bg-blue-100 text-blue-800 border-blue-200',
+      };
+    case 'IN_PROGRESS':
+      return {
+        label: 'Đang diễn ra',
+        badgeClass: 'bg-amber-100 text-amber-800 border-amber-200',
+      };
+    case 'COMPLETED':
+      return {
+        label: 'Đã hoàn thành',
+        badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+      };
+    case 'CANCELLED':
+      return {
+        label: 'Đã hủy',
+        badgeClass: 'bg-rose-100 text-rose-800 border-rose-200',
+      };
+  }
+}
+
+/**
+ * Nhãn và màu trạng thái điểm danh (AttendanceStatus)
+ */
+export function getAttendanceStatusMeta(status: AttendanceStatus): { label: string; badgeClass: string } {
+  switch (status) {
+    case 'PRESENT':
+      return {
+        label: 'Có mặt',
+        badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+      };
+    case 'LATE':
+      return {
+        label: 'Đi muộn',
+        badgeClass: 'bg-amber-100 text-amber-800 border-amber-200',
+      };
+    case 'ABSENT':
+      return {
+        label: 'Vắng mặt',
+        badgeClass: 'bg-rose-100 text-rose-800 border-rose-200',
+      };
+  }
+}
+
+/**
+ * Nhãn và màu trạng thái học phí (TuitionStatus)
+ */
+export function getTuitionStatusMeta(status: TuitionStatus): { label: string; badgeClass: string } {
+  switch (status) {
+    case 'PAID':
+      return {
+        label: 'Đã đóng đủ',
+        badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+      };
+    case 'PARTIAL':
+      return {
+        label: 'Đã đóng một phần',
+        badgeClass: 'bg-blue-100 text-blue-800 border-blue-200',
+      };
+    case 'UNPAID':
+      return {
+        label: 'Chưa đóng',
+        badgeClass: 'bg-amber-100 text-amber-800 border-amber-200',
+      };
+    case 'OVERDUE':
+      return {
+        label: 'Quá hạn',
+        badgeClass: 'bg-rose-100 text-rose-800 border-rose-200',
+      };
+  }
+}
+
+/**
+ * Nhãn và màu trạng thái bài tập (AssignmentStatus)
+ */
+export function getAssignmentStatusMeta(status: AssignmentStatus): { label: string; badgeClass: string } {
+  switch (status) {
+    case 'SUBMITTED':
+      return {
+        label: 'Đã nộp bài',
+        badgeClass: 'bg-blue-100 text-blue-800 border-blue-200',
+      };
+    case 'GRADED':
+      return {
+        label: 'Đã chấm điểm',
+        badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+      };
+    case 'RESUBMIT_REQUESTED':
+      return {
+        label: 'Yêu cầu nộp lại',
+        badgeClass: 'bg-amber-100 text-amber-800 border-amber-200',
+      };
+  }
+}
