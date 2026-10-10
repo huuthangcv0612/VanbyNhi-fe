@@ -13,6 +13,9 @@ import { LoadingScreen } from '@/components/feedback/LoadingScreen';
 const LoginPage = lazy(() =>
   import('@/features/auth/pages/LoginPage').then((m) => ({ default: m.LoginPage })),
 );
+const RegisterPage = lazy(() =>
+  import('@/features/auth/pages/RegisterPage').then((m) => ({ default: m.RegisterPage })),
+);
 const ForbiddenPage = lazy(() =>
   import('@/pages/ForbiddenPage').then((m) => ({ default: m.ForbiddenPage })),
 );
@@ -78,6 +81,14 @@ const router = createBrowserRouter([
     element: (
       <SuspenseWrapper>
         <LoginPage />
+      </SuspenseWrapper>
+    ),
+  },
+  {
+    path: '/register',
+    element: (
+      <SuspenseWrapper>
+        <RegisterPage />
       </SuspenseWrapper>
     ),
   },

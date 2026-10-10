@@ -2,6 +2,8 @@ import { apiClient } from '@/lib/api-client';
 import type {
   LoginPayload,
   LoginResponse,
+  RegisterPayload,
+  RegisterResponse,
   RefreshTokenPayload,
   RefreshTokenResponse,
   LogoutResponse,
@@ -10,6 +12,15 @@ import type {
 } from '@/types/auth.types';
 
 export const authService = {
+  /**
+   * Đăng ký tài khoản mới (mặc định vai trò STUDENT)
+   * POST /auth/register
+   */
+  async register(payload: RegisterPayload): Promise<RegisterResponse> {
+    const response = await apiClient.post<RegisterResponse>('/auth/register', payload);
+    return response.data;
+  },
+
   /**
    * Đăng nhập bằng Email hoặc Số điện thoại + Mật khẩu
    * POST /auth/login

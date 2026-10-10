@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { BookOpen, GraduationCap, Sparkles } from 'lucide-react';
 import { LoginForm } from '../components/LoginForm';
 import { useAuth } from '../hooks/useAuth';
@@ -62,6 +62,16 @@ export function LoginPage() {
           </div>
 
           <LoginForm onSuccess={handleSuccess} />
+
+          <div className="mt-4 text-center text-sm text-slate-600">
+            Chưa có tài khoản?{' '}
+            <Link
+              to="/register"
+              className="font-semibold text-amber-700 hover:text-amber-800 hover:underline"
+            >
+              Đăng ký ngay
+            </Link>
+          </div>
 
           <div className="mt-6 pt-6 border-t border-slate-100 text-xs text-slate-500 flex flex-col gap-2">
             <div className="flex items-center gap-1.5 text-slate-600 font-medium">
