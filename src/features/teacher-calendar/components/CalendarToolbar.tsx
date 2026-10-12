@@ -141,7 +141,7 @@ export function CalendarToolbar({
             leftIcon={<Plus className="w-4 h-4" />}
             className="bg-amber-700 hover:bg-amber-800 text-white shadow-xs"
           >
-            + Tạo lịch
+            Tạo lịch
           </Button>
         </div>
       </div>

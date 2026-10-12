@@ -5,6 +5,7 @@ import {
   formatDateTime,
   getRoleMeta,
   getClassStatusMeta,
+  getMemberStatusMeta,
   getTuitionStatusMeta,
   getAttendanceStatusMeta,
 } from './formatters';
@@ -54,8 +55,19 @@ describe('formatters', () => {
   describe('getClassStatusMeta', () => {
     it('returns proper metadata for class statuses', () => {
       expect(getClassStatusMeta('ACTIVE').label).toBe('Đang mở');
+      expect(getClassStatusMeta('CLOSED').label).toBe('Đã đóng');
       expect(getClassStatusMeta('INACTIVE').label).toBe('Tạm dừng');
       expect(getClassStatusMeta('COMPLETED').label).toBe('Đã kết thúc');
+    });
+  });
+
+  describe('getMemberStatusMeta', () => {
+    it('returns proper metadata for member statuses', () => {
+      expect(getMemberStatusMeta('PENDING').label).toBe('Chờ duyệt');
+      expect(getMemberStatusMeta('ACTIVE').label).toBe('Đang học');
+      expect(getMemberStatusMeta('REJECTED').label).toBe('Đã từ chối');
+      expect(getMemberStatusMeta('LEFT').label).toBe('Đã rời lớp');
+      expect(getMemberStatusMeta('REMOVED').label).toBe('Đã bị xóa');
     });
   });
 

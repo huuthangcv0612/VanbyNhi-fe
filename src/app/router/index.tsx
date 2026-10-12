@@ -48,6 +48,26 @@ const ClassesListPage = lazy(() =>
     default: m.ClassesListPage,
   })),
 );
+const TeacherClassesListPage = lazy(() =>
+  import('@/features/classes/pages/TeacherClassesListPage').then((m) => ({
+    default: m.TeacherClassesListPage,
+  })),
+);
+const TeacherClassDetailPage = lazy(() =>
+  import('@/features/classes/pages/TeacherClassDetailPage').then((m) => ({
+    default: m.TeacherClassDetailPage,
+  })),
+);
+const StudentClassesPage = lazy(() =>
+  import('@/features/classes/pages/StudentClassesPage').then((m) => ({
+    default: m.StudentClassesPage,
+  })),
+);
+const StudentClassDetailPage = lazy(() =>
+  import('@/features/classes/pages/StudentClassDetailPage').then((m) => ({
+    default: m.StudentClassDetailPage,
+  })),
+);
 const SessionsPage = lazy(() =>
   import('@/features/sessions/pages/SessionsPage').then((m) => ({ default: m.SessionsPage })),
 );
@@ -238,7 +258,15 @@ const router = createBrowserRouter([
                 path: 'classes',
                 element: (
                   <SuspenseWrapper>
-                    <ClassesListPage />
+                    <TeacherClassesListPage />
+                  </SuspenseWrapper>
+                ),
+              },
+              {
+                path: 'classes/:classId',
+                element: (
+                  <SuspenseWrapper>
+                    <TeacherClassDetailPage />
                   </SuspenseWrapper>
                 ),
               },
@@ -308,7 +336,15 @@ const router = createBrowserRouter([
                 path: 'classes',
                 element: (
                   <SuspenseWrapper>
-                    <ClassesListPage />
+                    <StudentClassesPage />
+                  </SuspenseWrapper>
+                ),
+              },
+              {
+                path: 'classes/:classId',
+                element: (
+                  <SuspenseWrapper>
+                    <StudentClassDetailPage />
                   </SuspenseWrapper>
                 ),
               },

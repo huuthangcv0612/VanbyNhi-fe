@@ -51,6 +51,7 @@ export interface CalendarEvent {
   meetUrl?: string | null;
   googleMeetUrl?: string | null;
   labelId?: string | null;
+  classId?: string | null;
   label?: CalendarLabel | null;
   reminderMinutes?: number | null;
   remindBeforeMinutes?: number | null; // Tương thích ngược
@@ -78,6 +79,7 @@ export interface CreateEventPayload {
   address?: string;
   meetUrl?: string;
   labelId?: string;
+  classId?: string;
   reminderMinutes?: number;
   note?: string;
   studentIds?: string[];

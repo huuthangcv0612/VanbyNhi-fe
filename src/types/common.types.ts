@@ -1,8 +1,8 @@
 export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT';
 
-export type ClassStatus = 'ACTIVE' | 'INACTIVE' | 'COMPLETED';
+export type ClassStatus = 'ACTIVE' | 'INACTIVE' | 'COMPLETED' | 'CLOSED';
 
-export type MemberStatus = 'ACTIVE' | 'INACTIVE' | 'LEFT';
+export type MemberStatus = 'PENDING' | 'ACTIVE' | 'REJECTED' | 'LEFT' | 'REMOVED' | 'INACTIVE';
 
 export type SessionStatus = 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
 

@@ -1,6 +1,7 @@
 import type {
   UserRole,
   ClassStatus,
+  MemberStatus,
   SessionStatus,
   AttendanceStatus,
   TuitionStatus,
@@ -90,6 +91,11 @@ export function getClassStatusMeta(status: ClassStatus): { label: string; badgeC
         label: 'Đang mở',
         badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-200',
       };
+    case 'CLOSED':
+      return {
+        label: 'Đã đóng',
+        badgeClass: 'bg-rose-100 text-rose-800 border-rose-200',
+      };
     case 'INACTIVE':
       return {
         label: 'Tạm dừng',
@@ -98,6 +104,54 @@ export function getClassStatusMeta(status: ClassStatus): { label: string; badgeC
     case 'COMPLETED':
       return {
         label: 'Đã kết thúc',
+        badgeClass: 'bg-slate-100 text-slate-800 border-slate-200',
+      };
+    default:
+      return {
+        label: status,
+        badgeClass: 'bg-slate-100 text-slate-800 border-slate-200',
+      };
+  }
+}
+
+/**
+ * Nhãn và màu trạng thái thành viên (MemberStatus)
+ */
+export function getMemberStatusMeta(status: MemberStatus): { label: string; badgeClass: string } {
+  switch (status) {
+    case 'PENDING':
+      return {
+        label: 'Chờ duyệt',
+        badgeClass: 'bg-amber-100 text-amber-800 border-amber-200',
+      };
+    case 'ACTIVE':
+      return {
+        label: 'Đang học',
+        badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+      };
+    case 'REJECTED':
+      return {
+        label: 'Đã từ chối',
+        badgeClass: 'bg-rose-100 text-rose-800 border-rose-200',
+      };
+    case 'LEFT':
+      return {
+        label: 'Đã rời lớp',
+        badgeClass: 'bg-slate-100 text-slate-800 border-slate-200',
+      };
+    case 'REMOVED':
+      return {
+        label: 'Đã bị xóa',
+        badgeClass: 'bg-slate-200 text-slate-700 border-slate-300',
+      };
+    case 'INACTIVE':
+      return {
+        label: 'Tạm ngưng',
+        badgeClass: 'bg-gray-100 text-gray-800 border-gray-200',
+      };
+    default:
+      return {
+        label: status,
         badgeClass: 'bg-slate-100 text-slate-800 border-slate-200',
       };
   }

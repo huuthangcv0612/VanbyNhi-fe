@@ -19,6 +19,8 @@ import {
   useUpdateEvent,
   useDeleteEvent,
 } from '../hooks/useTeacherEvents';
+import { useQuery } from '@tanstack/react-query';
+import { teacherClassesService } from '@/features/classes/services/classes.service';
 import { teacherCalendarService } from '../services/teacher-calendar.service';
 import {
   formatDateKey,
@@ -102,6 +104,18 @@ function EventFormInner({
   const [studentIds, setStudentIds] = useState<string[]>(() => {
     return eventToEdit?.participants?.map((p) => p.studentId) || [];
   });
+
+  // Phạm vi phân công học sinh (Theo lớp / Học sinh cụ thể / Không gán)
+  const [assignmentScope, setAssignmentScope] = useState<'CLASS' | 'STUDENTS' | 'NONE'>('CLASS');
+  const [selectedClassId, setSelectedClassId] = useState<string>(() => eventToEdit?.classId || '');
+
+  // Lấy danh sách lớp ACTIVE của giáo viên
+  const { data: teacherClassesData } = useQuery({
+    queryKey: ['teacher-classes-for-calendar'],
+    queryFn: () => teacherClassesService.getMyClasses({ status: 'ACTIVE', limit: 100 }),
+    enabled: !isEditMode,
+  });
+  const activeClasses = teacherClassesData?.items || [];
 
   // Validation errors
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -224,7 +238,9 @@ function EventFormInner({
           labelId: labelId || undefined,
           reminderMinutes: reminderMinutes === null ? undefined : Number(reminderMinutes),
           note: notes.trim() || undefined,
-          studentIds: studentIds.length > 0 ? studentIds : undefined,
+          classId: assignmentScope === 'CLASS' && selectedClassId ? selectedClassId : undefined,
+          studentIds:
+            assignmentScope === 'STUDENTS' && studentIds.length > 0 ? studentIds : undefined,
         };
 
         const res = await createMutation.mutateAsync(payload);
@@ -392,12 +408,99 @@ function EventFormInner({
           leftIcon={<MapPin className="w-4 h-4" />}
         />
 
-        {/* Student Selector */}
-        <StudentSelector
-          selectedStudentIds={studentIds}
-          onChange={setStudentIds}
-          knownStudents={knownStudents}
-        />
+        {/* Student / Class Assignment Scope */}
+        {!isEditMode ? (
+          <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/70 p-3.5">
+            <label className="block text-sm font-semibold text-slate-800">
+              Phạm vi học sinh tham gia ca dạy
+            </label>
+
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => setAssignmentScope('CLASS')}
+                className={`py-2 px-3 rounded-xl text-xs font-semibold border transition-colors cursor-pointer text-center ${
+                  assignmentScope === 'CLASS'
+                    ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
+                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                }`}
+              >
+                Gán cho cả lớp
+              </button>
+              <button
+                type="button"
+                onClick={() => setAssignmentScope('STUDENTS')}
+                className={`py-2 px-3 rounded-xl text-xs font-semibold border transition-colors cursor-pointer text-center ${
+                  assignmentScope === 'STUDENTS'
+                    ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
+                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                }`}
+              >
+                Chọn học sinh
+              </button>
+              <button
+                type="button"
+                onClick={() => setAssignmentScope('NONE')}
+                className={`py-2 px-3 rounded-xl text-xs font-semibold border transition-colors cursor-pointer text-center ${
+                  assignmentScope === 'NONE'
+                    ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
+                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                }`}
+              >
+                Không phân công
+              </button>
+            </div>
+
+            {assignmentScope === 'CLASS' && (
+              <div className="space-y-2 pt-1">
+                <label className="block text-xs font-medium text-slate-600">
+                  Chọn lớp học phụ trách:
+                </label>
+                <select
+                  value={selectedClassId}
+                  onChange={(e) => {
+                    const cid = e.target.value;
+                    setSelectedClassId(cid);
+                    if (cid) {
+                      const matchedClass = activeClasses.find((c) => c.id === cid);
+                      if (matchedClass?.defaultMeetUrl && !meetUrl) {
+                        setMeetUrl(matchedClass.defaultMeetUrl);
+                      }
+                    }
+                  }}
+                  className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-xs focus:border-amber-500 focus:outline-none"
+                >
+                  <option value="">-- Chọn một lớp học --</option>
+                  {activeClasses.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} ({c.activeStudentCount || 0} học sinh)
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-amber-800 bg-amber-100/60 p-2 rounded-lg leading-relaxed">
+                  💡 Tất cả học sinh đang hoạt động (ACTIVE) trong lớp này sẽ được tự động thêm vào lịch ca dạy.
+                </p>
+              </div>
+            )}
+
+            {assignmentScope === 'STUDENTS' && (
+              <div className="pt-1">
+                <StudentSelector
+                  selectedStudentIds={studentIds}
+                  onChange={setStudentIds}
+                  knownStudents={knownStudents}
+                />
+              </div>
+            )}
+          </div>
+        ) : (
+          /* Student Selector for edit mode */
+          <StudentSelector
+            selectedStudentIds={studentIds}
+            onChange={setStudentIds}
+            knownStudents={knownStudents}
+          />
+        )}
 
         {/* Notes */}
         <div>

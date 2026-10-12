@@ -123,6 +123,7 @@ export const teacherCalendarService = {
     if (payload.address !== undefined) cleanPayload.address = payload.address;
     if (payload.meetUrl !== undefined) cleanPayload.meetUrl = payload.meetUrl;
     if (payload.labelId !== undefined) cleanPayload.labelId = payload.labelId;
+    if (payload.classId !== undefined) cleanPayload.classId = payload.classId;
     if (payload.reminderMinutes !== undefined)
       cleanPayload.reminderMinutes = payload.reminderMinutes;
     if (payload.note !== undefined) cleanPayload.note = payload.note;
