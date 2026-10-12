@@ -51,7 +51,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         return [
           { label: 'Bàn làm việc', to: '/teacher/dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
           { label: 'Lớp phụ trách', to: '/teacher/classes', icon: <BookOpen className="w-4 h-4" /> },
-          { label: 'Lịch giảng dạy', to: '/teacher/sessions', icon: <Calendar className="w-4 h-4" /> },
+          { label: 'Lịch giảng dạy', to: '/teacher/calendar', icon: <Calendar className="w-4 h-4" /> },
           { label: 'Điểm danh', to: '/teacher/attendance', icon: <ClipboardCheck className="w-4 h-4" /> },
           { label: 'Chấm bài tập', to: '/teacher/assignments', icon: <FileText className="w-4 h-4" /> },
           { label: 'Thông báo', to: '/teacher/notifications', icon: <Bell className="w-4 h-4" /> },

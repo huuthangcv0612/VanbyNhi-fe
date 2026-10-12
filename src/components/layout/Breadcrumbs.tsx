@@ -9,6 +9,7 @@ const routeLabels: Record<string, string> = {
   classes: 'Lớp học',
   users: 'Người dùng',
   sessions: 'Buổi học',
+  calendar: 'Lịch giảng dạy',
   attendance: 'Điểm danh',
   tuition: 'Học phí',
   assignments: 'Bài tập',

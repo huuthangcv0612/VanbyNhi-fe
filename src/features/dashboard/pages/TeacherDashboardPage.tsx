@@ -34,12 +34,12 @@ export function TeacherDashboardPage() {
             </Link>
 
             <Link
-              to="/teacher/sessions"
+              to="/teacher/calendar"
               className="flex items-center justify-between p-3 rounded-xl border border-slate-200/80 hover:bg-slate-50 transition-colors text-slate-800 text-sm font-medium"
             >
               <div className="flex items-center gap-3">
                 <Calendar className="w-4 h-4 text-amber-700" />
-                <span>Lịch giảng dạy & Nhật ký bài giảng</span>
+                <span>Lịch giảng dạy & Thời khóa biểu</span>
               </div>
               <ArrowRight className="w-4 h-4 text-slate-400" />
             </Link>
