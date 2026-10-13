@@ -34,7 +34,7 @@ export function StudentDashboardPage() {
             </Link>
 
             <Link
-              to="/student/sessions"
+              to="/student/schedules"
               className="flex items-center justify-between p-3 rounded-xl border border-slate-200/80 hover:bg-slate-50 transition-colors text-slate-800 text-sm font-medium"
             >
               <div className="flex items-center gap-3">

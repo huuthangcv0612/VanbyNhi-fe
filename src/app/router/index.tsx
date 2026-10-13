@@ -94,6 +94,11 @@ const TeacherCalendarPage = lazy(() =>
     default: m.TeacherCalendarPage,
   })),
 );
+const StudentSchedulesPage = lazy(() =>
+  import('@/features/student-schedules/pages/student-schedules-page').then((m) => ({
+    default: m.StudentSchedulesPage,
+  })),
+);
 
 function SuspenseWrapper({ children }: { children: React.ReactNode }) {
   return <Suspense fallback={<LoadingScreen message="Đang tải trang..." />}>{children}</Suspense>;
@@ -349,12 +354,16 @@ const router = createBrowserRouter([
                 ),
               },
               {
-                path: 'sessions',
+                path: 'schedules',
                 element: (
                   <SuspenseWrapper>
-                    <SessionsPage />
+                    <StudentSchedulesPage />
                   </SuspenseWrapper>
                 ),
+              },
+              {
+                path: 'sessions',
+                element: <Navigate to="/student/schedules" replace />,
               },
               {
                 path: 'assignments',
