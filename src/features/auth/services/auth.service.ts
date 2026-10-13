@@ -9,6 +9,11 @@ import type {
   LogoutResponse,
   AuthMeResponse,
   User,
+  ExchangeZaloTicketPayload,
+  ExchangeZaloResponse,
+  LinkZaloPayload,
+  LinkZaloResponse,
+  UnlinkZaloResponse,
 } from '@/types/auth.types';
 
 export const authService = {
@@ -63,6 +68,42 @@ export const authService = {
    */
   async getUserMe(): Promise<User> {
     const response = await apiClient.get<User>('/users/me');
+    return response.data;
+  },
+
+  /**
+   * Lấy URL chuyển hướng tới Backend để bắt đầu quy trình Zalo OAuth V4
+   * GET /auth/zalo
+   */
+  getZaloLoginUrl(): string {
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+    return `${baseUrl}/auth/zalo`;
+  },
+
+  /**
+   * Đổi exchange ticket lấy access token và refresh token
+   * POST /auth/zalo/exchange
+   */
+  async exchangeZaloTicket(payload: ExchangeZaloTicketPayload): Promise<ExchangeZaloResponse> {
+    const response = await apiClient.post<ExchangeZaloResponse>('/auth/zalo/exchange', payload);
+    return response.data;
+  },
+
+  /**
+   * Xác minh tài khoản VanbyNhi và liên kết với tài khoản Zalo
+   * POST /auth/zalo/link
+   */
+  async linkZaloAccount(payload: LinkZaloPayload): Promise<LinkZaloResponse> {
+    const response = await apiClient.post<LinkZaloResponse>('/auth/zalo/link', payload);
+    return response.data;
+  },
+
+  /**
+   * Hủy liên kết tài khoản Zalo của người dùng đang đăng nhập
+   * POST /auth/zalo/unlink
+   */
+  async unlinkZaloAccount(): Promise<UnlinkZaloResponse> {
+    const response = await apiClient.post<UnlinkZaloResponse>('/auth/zalo/unlink');
     return response.data;
   },
 };

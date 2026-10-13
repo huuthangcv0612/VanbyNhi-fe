@@ -8,6 +8,7 @@ export interface User {
   email: string | null;
   role: UserRole;
   avatarUrl: string | null;
+  zaloId?: string | null;
   dateOfBirth?: string | null;
   isActive?: boolean;
   createdAt?: string;
@@ -19,6 +20,33 @@ export interface AuthTokens {
   tokenType: string;
   expiresIn: string;
   refreshToken: string;
+}
+
+export interface ExchangeZaloTicketPayload {
+  ticket: string;
+}
+
+export interface ExchangeZaloResponse {
+  message: string;
+  isLinked: boolean;
+  user: User;
+  tokens: AuthTokens;
+}
+
+export interface LinkZaloPayload {
+  linkTicket: string;
+  identifier: string;
+  password: string;
+}
+
+export interface LinkZaloResponse {
+  message: string;
+  user: User;
+  tokens: AuthTokens;
+}
+
+export interface UnlinkZaloResponse {
+  message: string;
 }
 
 export interface LoginPayload {

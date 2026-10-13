@@ -73,4 +73,28 @@ describe('LoginForm', () => {
     await userEvent.click(hideBtn);
     expect(passwordInput).toHaveAttribute('type', 'password');
   });
+
+  it('renders Zalo login button and navigates to Zalo authorization url on click', async () => {
+    const originalLocation = window.location;
+    Object.defineProperty(window, 'location', {
+      value: { ...originalLocation, href: '' },
+      writable: true,
+      configurable: true,
+    });
+
+    render(<LoginForm />);
+
+    const zaloBtn = screen.getByRole('button', { name: /đăng nhập bằng zalo/i });
+    expect(zaloBtn).toBeInTheDocument();
+
+    await userEvent.click(zaloBtn);
+
+    expect(window.location.href).toContain('/auth/zalo');
+
+    Object.defineProperty(window, 'location', {
+      value: originalLocation,
+      writable: true,
+      configurable: true,
+    });
+  });
 });

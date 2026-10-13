@@ -2,7 +2,7 @@ import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import { storage } from './storage';
 import type { RefreshTokenResponse } from '@/types/auth.types';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
 interface RetryableRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
@@ -60,7 +60,9 @@ apiClient.interceptors.response.use(
     const isAuthRoute =
       url.includes('/auth/login') ||
       url.includes('/auth/refresh') ||
-      url.includes('/auth/logout');
+      url.includes('/auth/logout') ||
+      url.includes('/auth/zalo/exchange') ||
+      url.includes('/auth/zalo/link');
 
     // Nếu mã lỗi là 401 và không phải là route auth và chưa từng retry
     if (error.response?.status === 401 && !isAuthRoute && !originalRequest._retry) {
@@ -136,7 +138,7 @@ apiClient.interceptors.response.use(
  */
 export function getApiErrorMessage(error: unknown): string {
   if (axios.isAxiosError(error)) {
-    if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+    if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
       return 'Yêu cầu quá thời gian chờ (timeout). Vui lòng thử lại sau.';
     }
 

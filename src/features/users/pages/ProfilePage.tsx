@@ -4,6 +4,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { User as UserIcon, Mail, Phone, Calendar, Key, CheckCircle2, Shield } from 'lucide-react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { authService } from '@/features/auth/services/auth.service';
+import { ZaloIcon } from '@/features/auth/components/ZaloIcon';
 import { usersService } from '../services/users.service';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -40,6 +42,7 @@ export function ProfilePage() {
 
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isUnlinkingZalo, setIsUnlinkingZalo] = useState(false);
 
   const roleMeta = user ? getRoleMeta(user.role) : null;
 
@@ -91,6 +94,20 @@ export function ProfilePage() {
       error(getApiErrorMessage(err));
     } finally {
       setIsChangingPassword(false);
+    }
+  };
+
+  const onUnlinkZalo = async () => {
+    if (!window.confirm('Bạn có chắc chắn muốn hủy liên kết tài khoản Zalo không?')) return;
+    setIsUnlinkingZalo(true);
+    try {
+      const res = await authService.unlinkZaloAccount();
+      await refreshUser();
+      success(res.message || 'Hủy liên kết Zalo thành công');
+    } catch (err) {
+      error(getApiErrorMessage(err));
+    } finally {
+      setIsUnlinkingZalo(false);
     }
   };
 
@@ -258,6 +275,57 @@ export function ProfilePage() {
                   </Button>
                 </div>
               </form>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Liên kết tài khoản mạng xã hội</CardTitle>
+              <CardDescription>
+                Quản lý liên kết tài khoản Zalo để đăng nhập nhanh chóng và bảo mật
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-slate-200/80 bg-slate-50/50">
+                <div className="flex items-center gap-3">
+                  <ZaloIcon className="w-10 h-10 shrink-0" />
+                  <div>
+                    <h4 className="text-sm font-semibold text-slate-800">Tài khoản Zalo</h4>
+                    <p className="text-xs text-slate-500">
+                      {user?.zaloId
+                        ? 'Đã liên kết thành công với tài khoản Zalo'
+                        : 'Chưa liên kết với tài khoản Zalo nào'}
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  {user?.zaloId ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="border-rose-200 text-rose-700 hover:bg-rose-50 hover:border-rose-300"
+                      onClick={onUnlinkZalo}
+                      isLoading={isUnlinkingZalo}
+                    >
+                      Hủy liên kết
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="border-sky-200 text-sky-700 hover:bg-sky-50 hover:border-sky-300"
+                      onClick={() => {
+                        window.location.href = authService.getZaloLoginUrl();
+                      }}
+                    >
+                      Liên kết ngay
+                    </Button>
+                  )}
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>

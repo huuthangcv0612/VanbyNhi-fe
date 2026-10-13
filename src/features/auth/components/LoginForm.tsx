@@ -4,6 +4,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Eye, EyeOff, Lock, User as UserIcon, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { authService } from '@/features/auth/services/auth.service';
+import { ZaloIcon } from '@/features/auth/components/ZaloIcon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { getApiErrorMessage } from '@/lib/api-client';
@@ -110,6 +112,30 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
           isLoading={isSubmitting}
         >
           Đăng nhập
+        </Button>
+      </div>
+
+      <div className="relative my-4">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-slate-200" />
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-white px-2 text-slate-400 font-medium">Hoặc</span>
+        </div>
+      </div>
+
+      <div>
+        <Button
+          type="button"
+          variant="outline"
+          size="md"
+          className="w-full border-slate-200 hover:bg-sky-50/50 hover:border-sky-300 hover:text-sky-700 text-slate-700 font-medium flex items-center justify-center gap-2.5 transition-colors shadow-xs"
+          onClick={() => {
+            window.location.href = authService.getZaloLoginUrl();
+          }}
+        >
+          <ZaloIcon className="w-5 h-5 shrink-0" />
+          <span>Đăng nhập bằng Zalo</span>
         </Button>
       </div>
     </form>

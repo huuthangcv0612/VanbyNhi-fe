@@ -16,6 +16,9 @@ const LoginPage = lazy(() =>
 const RegisterPage = lazy(() =>
   import('@/features/auth/pages/RegisterPage').then((m) => ({ default: m.RegisterPage })),
 );
+const ZaloCallbackPage = lazy(() =>
+  import('@/features/auth/pages/ZaloCallbackPage').then((m) => ({ default: m.ZaloCallbackPage })),
+);
 const ForbiddenPage = lazy(() =>
   import('@/pages/ForbiddenPage').then((m) => ({ default: m.ForbiddenPage })),
 );
@@ -119,6 +122,14 @@ const router = createBrowserRouter([
     element: (
       <SuspenseWrapper>
         <RegisterPage />
+      </SuspenseWrapper>
+    ),
+  },
+  {
+    path: '/auth/zalo/callback',
+    element: (
+      <SuspenseWrapper>
+        <ZaloCallbackPage />
       </SuspenseWrapper>
     ),
   },

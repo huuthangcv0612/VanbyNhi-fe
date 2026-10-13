@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import type { User, UserRole, LoginPayload } from '@/types/auth.types';
+import type { User, UserRole, LoginPayload, AuthTokens } from '@/types/auth.types';
 import { storage } from '@/lib/storage';
 import { authService } from '@/features/auth/services/auth.service';
 import { queryClient } from '@/lib/query-client';
@@ -112,6 +112,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const setAuthSession = (tokens: AuthTokens, user: User): void => {
+    storage.setAuth(tokens, user);
+    setUser(user);
+    queryClient.clear();
+  };
+
   const hasRole = (roles: UserRole[]): boolean => {
     if (!user) return false;
     return roles.includes(user.role);
@@ -127,6 +133,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         logout,
         refreshUser,
         hasRole,
+        setAuthSession,
       }}
     >
       {children}
