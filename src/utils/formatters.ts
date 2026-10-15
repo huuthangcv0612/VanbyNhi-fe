@@ -40,6 +40,20 @@ export function formatDateTime(date: string | Date | null | undefined): string {
 }
 
 /**
+ * Định dạng giờ: HH:mm
+ */
+export function formatTime(date: string | Date | null | undefined): string {
+  if (!date) return '-';
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return '-';
+  return new Intl.DateTimeFormat('vi-VN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(d);
+}
+
+/**
  * Định dạng ngày: DD/MM/YYYY
  */
 export function formatDate(date: string | Date | null | undefined): string {

@@ -31,8 +31,12 @@ const registerSchema = z
     email: z
       .string()
       .trim()
-      .min(1, 'Vui lòng nhập email')
-      .email('Email không đúng định dạng'),
+      .optional()
+      .or(z.literal(''))
+      .refine(
+        (val) => !val || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val),
+        'Email không đúng định dạng',
+      ),
     phone: z
       .string()
       .trim()
@@ -89,14 +93,17 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
   const onSubmit = async (values: RegisterFormValues) => {
     setServerError(null);
 
-    // Chuẩn bị payload theo đúng contract:
+    // Chuẩn bị payload theo đúng RegisterDto contract:
     // Tuyệt đối không gửi confirmPassword, role, isActive, passwordHash
     const payload: RegisterPayload = {
       fullName: values.fullName.trim(),
-      email: values.email.trim(),
       phone: values.phone.trim(),
       password: values.password, // không tự ý biến đổi mật khẩu
     };
+
+    if (values.email && values.email.trim() !== '') {
+      payload.email = values.email.trim();
+    }
 
     if (values.dateOfBirth && values.dateOfBirth.trim() !== '') {
       payload.dateOfBirth = values.dateOfBirth.trim();
@@ -210,7 +217,7 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
             {...register('email')}
             id="register-email"
             type="email"
-            label="Email *"
+            label="Email (Tùy chọn)"
             placeholder="vd: hocvien@example.com"
             autoComplete="email"
             error={errors.email?.message}

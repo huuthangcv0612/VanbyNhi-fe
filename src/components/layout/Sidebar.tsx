@@ -12,6 +12,7 @@ import {
   X,
   LogOut,
   User as UserIcon,
+  FolderOpen,
 } from 'lucide-react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { getRoleMeta } from '@/utils/formatters';
@@ -42,6 +43,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           { label: 'Lớp học', to: '/admin/classes', icon: <BookOpen className="w-4 h-4" /> },
           { label: 'Người dùng', to: '/admin/users', icon: <Users className="w-4 h-4" /> },
           { label: 'Buổi học', to: '/admin/sessions', icon: <Calendar className="w-4 h-4" /> },
+          { label: 'Quản lý tài liệu', to: '/teacher/documents', icon: <FolderOpen className="w-4 h-4" /> },
           { label: 'Điểm danh', to: '/admin/attendance', icon: <ClipboardCheck className="w-4 h-4" /> },
           { label: 'Học phí', to: '/admin/tuition', icon: <CreditCard className="w-4 h-4" /> },
           { label: 'Bài tập', to: '/admin/assignments', icon: <FileText className="w-4 h-4" /> },
@@ -52,6 +54,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           { label: 'Bàn làm việc', to: '/teacher/dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
           { label: 'Lớp phụ trách', to: '/teacher/classes', icon: <BookOpen className="w-4 h-4" /> },
           { label: 'Lịch giảng dạy', to: '/teacher/calendar', icon: <Calendar className="w-4 h-4" /> },
+          { label: 'Quản lý tài liệu', to: '/teacher/documents', icon: <FolderOpen className="w-4 h-4" /> },
           { label: 'Điểm danh', to: '/teacher/attendance', icon: <ClipboardCheck className="w-4 h-4" /> },
           { label: 'Chấm bài tập', to: '/teacher/assignments', icon: <FileText className="w-4 h-4" /> },
           { label: 'Thông báo', to: '/teacher/notifications', icon: <Bell className="w-4 h-4" /> },
@@ -62,6 +65,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           { label: 'Góc học tập', to: '/student/dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
           { label: 'Lớp học của tôi', to: '/student/classes', icon: <BookOpen className="w-4 h-4" /> },
           { label: 'Lịch học', to: '/student/schedules', icon: <Calendar className="w-4 h-4" /> },
+          { label: 'Tài liệu học tập', to: '/student/documents', icon: <FolderOpen className="w-4 h-4" /> },
           { label: 'Bài tập & Nộp bài', to: '/student/assignments', icon: <FileText className="w-4 h-4" /> },
           { label: 'Học phí cá nhân', to: '/student/tuition', icon: <CreditCard className="w-4 h-4" /> },
           { label: 'Thông báo', to: '/student/notifications', icon: <Bell className="w-4 h-4" /> },

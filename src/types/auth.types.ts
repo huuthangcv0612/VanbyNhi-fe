@@ -56,10 +56,10 @@ export interface LoginPayload {
 }
 
 export interface RegisterPayload {
-  fullName: string;
-  email: string;
   phone: string;
   password: string;
+  fullName: string;
+  email?: string;
   dateOfBirth?: string;
 }
 
@@ -79,8 +79,10 @@ export interface RefreshTokenPayload {
 }
 
 export interface RefreshTokenResponse {
-  message: string;
-  tokens: AuthTokens;
+  message?: string;
+  tokens?: AuthTokens;
+  accessToken?: string;
+  refreshToken?: string;
 }
 
 export interface LogoutResponse {

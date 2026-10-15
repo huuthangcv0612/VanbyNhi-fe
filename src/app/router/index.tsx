@@ -71,6 +71,11 @@ const StudentClassDetailPage = lazy(() =>
     default: m.StudentClassDetailPage,
   })),
 );
+const StudentSessionDetailPage = lazy(() =>
+  import('@/features/classes/pages/StudentSessionDetailPage').then((m) => ({
+    default: m.StudentSessionDetailPage,
+  })),
+);
 const SessionsPage = lazy(() =>
   import('@/features/sessions/pages/SessionsPage').then((m) => ({ default: m.SessionsPage })),
 );
@@ -100,6 +105,16 @@ const TeacherCalendarPage = lazy(() =>
 const StudentSchedulesPage = lazy(() =>
   import('@/features/student-schedules/pages/student-schedules-page').then((m) => ({
     default: m.StudentSchedulesPage,
+  })),
+);
+const TeacherDocumentsPage = lazy(() =>
+  import('@/features/documents/pages/TeacherDocumentsPage').then((m) => ({
+    default: m.TeacherDocumentsPage,
+  })),
+);
+const StudentDocumentsPage = lazy(() =>
+  import('@/features/documents/pages/StudentDocumentsPage').then((m) => ({
+    default: m.StudentDocumentsPage,
   })),
 );
 
@@ -248,6 +263,14 @@ const router = createBrowserRouter([
                   </SuspenseWrapper>
                 ),
               },
+              {
+                path: 'documents',
+                element: (
+                  <SuspenseWrapper>
+                    <TeacherDocumentsPage />
+                  </SuspenseWrapper>
+                ),
+              },
             ],
           },
         ],
@@ -326,6 +349,14 @@ const router = createBrowserRouter([
                   </SuspenseWrapper>
                 ),
               },
+              {
+                path: 'documents',
+                element: (
+                  <SuspenseWrapper>
+                    <TeacherDocumentsPage />
+                  </SuspenseWrapper>
+                ),
+              },
             ],
           },
         ],
@@ -365,6 +396,14 @@ const router = createBrowserRouter([
                 ),
               },
               {
+                path: 'sessions/:sessionId',
+                element: (
+                  <SuspenseWrapper>
+                    <StudentSessionDetailPage />
+                  </SuspenseWrapper>
+                ),
+              },
+              {
                 path: 'schedules',
                 element: (
                   <SuspenseWrapper>
@@ -397,6 +436,14 @@ const router = createBrowserRouter([
                 element: (
                   <SuspenseWrapper>
                     <NotificationsPage />
+                  </SuspenseWrapper>
+                ),
+              },
+              {
+                path: 'documents',
+                element: (
+                  <SuspenseWrapper>
+                    <StudentDocumentsPage />
                   </SuspenseWrapper>
                 ),
               },

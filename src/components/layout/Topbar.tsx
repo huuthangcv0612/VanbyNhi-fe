@@ -1,5 +1,5 @@
-import { Menu, Bell, User as UserIcon, LogOut, Shield } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Menu, Bell, User as UserIcon, LogOut, Shield, FolderOpen, BookOpen } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Breadcrumbs } from './Breadcrumbs';
 import { Dropdown } from '@/components/ui/dropdown';
 import { useAuth } from '@/features/auth/hooks/useAuth';
@@ -12,8 +12,38 @@ export interface TopbarProps {
 export function Topbar({ onOpenSidebar }: TopbarProps) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const roleMeta = user ? getRoleMeta(user.role) : null;
+  const isDocActive = location.pathname.includes('/documents');
+
+  // Role-appropriate naming and route
+  const getDocumentNavConfig = () => {
+    if (user?.role === 'TEACHER') {
+      return {
+        label: 'Quản lý tài liệu',
+        to: '/teacher/documents',
+        title: 'Trang quản lý tài liệu giảng dạy',
+        icon: FolderOpen,
+      };
+    }
+    if (user?.role === 'ADMIN') {
+      return {
+        label: 'Quản lý tài liệu',
+        to: '/teacher/documents',
+        title: 'Quản lý tài liệu hệ thống',
+        icon: FolderOpen,
+      };
+    }
+    return {
+      label: 'Tài liệu học tập',
+      to: '/student/documents',
+      title: 'Kho tài liệu học tập môn Văn',
+      icon: BookOpen,
+    };
+  };
+
+  const docNav = getDocumentNavConfig();
 
   return (
     <header className="sticky top-0 z-20 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white/95 px-4 sm:px-6 backdrop-blur-xs">
@@ -30,7 +60,27 @@ export function Topbar({ onOpenSidebar }: TopbarProps) {
         <Breadcrumbs />
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3">
+        {/* Document navigation item */}
+        {docNav && (
+          <button
+            type="button"
+            onClick={() => navigate(docNav.to)}
+            className={`flex items-center gap-2 p-2 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all cursor-pointer ${
+              isDocActive
+                ? 'bg-amber-100/90 text-amber-900 border border-amber-300 font-semibold shadow-xs'
+                : 'text-slate-700 hover:text-amber-800 hover:bg-amber-50/80 border border-slate-200/80 hover:border-amber-200'
+            }`}
+            aria-label={docNav.label}
+            title={docNav.title}
+          >
+            <docNav.icon
+              className={`w-4 h-4 shrink-0 ${isDocActive ? 'text-amber-800' : 'text-amber-600'}`}
+            />
+            <span className="hidden sm:inline">{docNav.label}</span>
+          </button>
+        )}
+
         {/* Quick notification link */}
         <button
           type="button"

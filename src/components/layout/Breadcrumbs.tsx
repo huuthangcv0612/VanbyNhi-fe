@@ -16,6 +16,7 @@ const routeLabels: Record<string, string> = {
   assignments: 'Bài tập',
   notifications: 'Thông báo',
   profile: 'Hồ sơ cá nhân',
+  documents: 'Tài liệu',
 };
 
 export function Breadcrumbs() {

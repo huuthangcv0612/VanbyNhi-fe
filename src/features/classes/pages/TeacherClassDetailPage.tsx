@@ -18,6 +18,7 @@ import {
   UserX,
   CheckCircle,
   XCircle,
+  Sparkles,
 } from 'lucide-react';
 import { teacherClassesService } from '../services/classes.service';
 import type {
@@ -40,13 +41,15 @@ import {
   formatCurrency,
   formatDate,
   formatDateTime,
+  formatTime,
 } from '@/utils/formatters';
 import { getApiErrorMessage } from '@/lib/api-client';
 import { useToast } from '@/hooks/useToast';
 import { ClassFormModal } from '../components/ClassFormModal';
 import { ConfirmModal } from '../components/ConfirmModal';
+import { TeacherClassSessionsTab } from '../components/TeacherClassSessionsTab';
 
-type ActiveTab = 'overview' | 'members' | 'requests';
+type ActiveTab = 'members' | 'requests' | 'sessions' | 'overview';
 
 export function TeacherClassDetailPage() {
   const { classId } = useParams<{ classId: string }>();
@@ -80,6 +83,7 @@ export function TeacherClassDetailPage() {
   const memberLimit = 10;
 
   // Requests tab state
+  const [requestSearch, setRequestSearch] = useState('');
   const [requestPage, setRequestPage] = useState(1);
   const requestLimit = 10;
 
@@ -109,7 +113,7 @@ export function TeacherClassDetailPage() {
       teacherClassesService.getClassMembers(classId!, {
         page: memberPage,
         limit: memberLimit,
-        search: memberSearch || undefined,
+        search: memberSearch.trim() ? memberSearch.trim() : undefined,
         status: memberStatusFilter !== 'ALL' ? (memberStatusFilter as MemberStatus) : undefined,
       }),
     enabled: Boolean(classId) && activeTab === 'members',
@@ -123,11 +127,12 @@ export function TeacherClassDetailPage() {
     error: requestsError,
     refetch: refetchRequests,
   } = useQuery({
-    queryKey: ['teacher-class-requests', classId, { requestPage, requestLimit }],
+    queryKey: ['teacher-class-requests', classId, { requestPage, requestLimit, requestSearch }],
     queryFn: () =>
       teacherClassesService.getJoinRequests(classId!, {
         page: requestPage,
         limit: requestLimit,
+        search: requestSearch.trim() ? requestSearch.trim() : undefined,
       }),
     enabled: Boolean(classId) && activeTab === 'requests',
   });
@@ -190,16 +195,23 @@ export function TeacherClassDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['teacher-classes'] });
       setIsEditOpen(false);
     },
+    onError: (err) => {
+      showToast({
+        type: 'error',
+        title: 'Không thể cập nhật lớp học',
+        message: getApiErrorMessage(err),
+      });
+    },
   });
 
-  // Mutation: Remove member
+  // Mutation: Remove member (chuyển sang REMOVED, không xóa user)
   const removeMemberMutation = useMutation({
     mutationFn: (studentId: string) => teacherClassesService.removeMember(classId!, studentId),
     onSuccess: () => {
       showToast({
         type: 'success',
         title: 'Đã xóa học sinh khỏi lớp',
-        message: 'Học sinh đã được chuyển sang trạng thái đã xóa',
+        message: 'Trạng thái thành viên đã được chuyển sang REMOVED',
       });
       queryClient.invalidateQueries({ queryKey: ['teacher-class-members', classId] });
       queryClient.invalidateQueries({ queryKey: ['teacher-class-detail', classId] });
@@ -223,7 +235,7 @@ export function TeacherClassDetailPage() {
       showToast({
         type: 'success',
         title: 'Đã duyệt yêu cầu',
-        message: 'Học sinh đã chính thức được thêm vào lớp học',
+        message: 'Học sinh đã chính thức được kích hoạt trong lớp học',
       });
       queryClient.invalidateQueries({ queryKey: ['teacher-class-requests', classId] });
       queryClient.invalidateQueries({ queryKey: ['teacher-class-members', classId] });
@@ -287,7 +299,8 @@ export function TeacherClassDetailPage() {
           <Skeleton className="h-9 w-9 rounded-xl" />
           <Skeleton className="h-8 w-64 rounded-lg" />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+          <Skeleton className="h-28 rounded-2xl" />
           <Skeleton className="h-28 rounded-2xl" />
           <Skeleton className="h-28 rounded-2xl" />
           <Skeleton className="h-28 rounded-2xl" />
@@ -319,10 +332,11 @@ export function TeacherClassDetailPage() {
   const statusMeta = getClassStatusMeta(classData.status);
   const isClosed = classData.status === 'CLOSED';
   const pendingRequestsCount = classData.pendingRequestsCount || 0;
+  const nextSession = classData.nextSession;
 
   return (
     <div className="space-y-6">
-      {/* Navigation header */}
+      {/* Navigation & Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-5">
         <div className="space-y-1">
           <Link
@@ -349,6 +363,7 @@ export function TeacherClassDetailPage() {
             variant="outline"
             size="sm"
             onClick={() => setIsEditOpen(true)}
+            className="cursor-pointer"
           >
             <Edit2 className="w-3.5 h-3.5 mr-1.5" />
             Sửa lớp
@@ -358,6 +373,7 @@ export function TeacherClassDetailPage() {
             variant="outline"
             size="sm"
             onClick={() => setIsStatusModalOpen(true)}
+            className="cursor-pointer"
           >
             {isClosed ? (
               <>
@@ -374,10 +390,69 @@ export function TeacherClassDetailPage() {
         </div>
       </div>
 
+      {/* Spotlight Next Session Banner nếu có */}
+      {nextSession && (
+        <div
+          className={`rounded-2xl border p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+            nextSession.status === 'IN_PROGRESS'
+              ? 'border-amber-300 bg-gradient-to-r from-amber-50 via-orange-50/40 to-amber-50/20 ring-1 ring-amber-200'
+              : 'border-blue-200 bg-gradient-to-r from-blue-50/50 via-slate-50/30 to-amber-50/20'
+          }`}
+        >
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-100 text-amber-800">
+                <Sparkles className="w-3.5 h-3.5" />
+              </span>
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                {nextSession.status === 'IN_PROGRESS' ? 'Buổi học đang diễn ra' : 'Buổi học tiếp theo'}
+              </span>
+
+              {nextSession.status === 'IN_PROGRESS' ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-700 border border-rose-200 animate-pulse">
+                  <span className="h-1.5 w-1.5 rounded-full bg-rose-600" />
+                  ĐANG DIỄN RA (LIVE)
+                </span>
+              ) : (
+                <span className="text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">
+                  Sắp diễn ra
+                </span>
+              )}
+            </div>
+
+            <h3 className="text-lg font-bold font-serif text-slate-900">
+              {nextSession.title}
+            </h3>
+
+            <div className="flex items-center gap-3 text-xs text-slate-600 font-mono">
+              <span className="flex items-center gap-1 font-sans">
+                <Calendar className="w-3.5 h-3.5 text-amber-600" />
+                {formatDate(nextSession.startTime)}
+              </span>
+              <span>•</span>
+              <span className="flex items-center gap-1">
+                <Clock className="w-3.5 h-3.5 text-amber-600" />
+                {formatTime(nextSession.startTime)} - {formatTime(nextSession.endTime)}
+              </span>
+            </div>
+          </div>
+
+          <div className="shrink-0">
+            <Button
+              size="sm"
+              onClick={() => setActiveTab('sessions')}
+              className="bg-amber-700 hover:bg-amber-800 text-white cursor-pointer"
+            >
+              Xem trong danh sách buổi học &rarr;
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Thông tin mã tham gia & Thống kê nhanh */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {/* Card Mã tham gia */}
-        <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-4 shadow-xs md:col-span-1">
+        <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-4 shadow-xs">
           <p className="text-xs font-bold text-amber-800 uppercase tracking-wider mb-1">
             Mã tham gia lớp
           </p>
@@ -409,14 +484,14 @@ export function TeacherClassDetailPage() {
             </div>
           </div>
           <p className="text-[11px] text-amber-700/90 mt-2 leading-tight">
-            Cung cấp mã này cho học sinh để họ gửi yêu cầu tham gia lớp.
+            Cung cấp mã này cho học sinh để gửi yêu cầu vào lớp.
           </p>
         </div>
 
-        {/* Card Sĩ số */}
+        {/* Card Sĩ số học sinh */}
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700 border border-blue-200">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700 border border-blue-200 shrink-0">
               <Users className="w-5 h-5" />
             </div>
             <div>
@@ -424,7 +499,7 @@ export function TeacherClassDetailPage() {
               <p className="text-xl font-bold text-slate-900">
                 {classData.activeStudentCount ?? 0}
                 <span className="text-sm font-normal text-slate-400">
-                  {' '}/ {classData.maxStudents !== null && classData.maxStudents !== undefined ? classData.maxStudents : 'Không giới hạn'}
+                  {' '}/ {classData.maxStudents !== null && classData.maxStudents !== undefined ? `${classData.maxStudents} chỗ` : 'Không giới hạn'}
                 </span>
               </p>
             </div>
@@ -434,7 +509,7 @@ export function TeacherClassDetailPage() {
         {/* Card Yêu cầu chờ duyệt */}
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-700 border border-amber-200">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-700 border border-amber-200 shrink-0">
               <Clock className="w-5 h-5" />
             </div>
             <div>
@@ -454,7 +529,7 @@ export function TeacherClassDetailPage() {
         {/* Card Buổi học */}
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
               <Calendar className="w-5 h-5" />
             </div>
             <div>
@@ -506,6 +581,22 @@ export function TeacherClassDetailPage() {
 
           <button
             type="button"
+            onClick={() => setActiveTab('sessions')}
+            className={`py-3 text-sm font-medium border-b-2 transition-colors cursor-pointer flex items-center gap-2 ${
+              activeTab === 'sessions'
+                ? 'border-amber-600 text-amber-900 font-semibold'
+                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+            }`}
+          >
+            <Calendar className="w-4 h-4" />
+            <span>Buổi học</span>
+            <span className="ml-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600 font-semibold">
+              {classData.totalSessionsCount ?? 0}
+            </span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => setActiveTab('overview')}
             className={`py-3 text-sm font-medium border-b-2 transition-colors cursor-pointer flex items-center gap-2 ${
               activeTab === 'overview'
@@ -513,12 +604,12 @@ export function TeacherClassDetailPage() {
                 : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
             }`}
           >
-            <span>Tổng quan lớp học</span>
+            <span>Tổng quan</span>
           </button>
         </nav>
       </div>
 
-      {/* Tab: DANH SÁCH HỌC SINH */}
+      {/* Tab 1: DANH SÁCH HỌC SINH */}
       {activeTab === 'members' && (
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
@@ -530,7 +621,7 @@ export function TeacherClassDetailPage() {
                   setMemberSearch(e.target.value);
                   setMemberPage(1);
                 }}
-                leftIcon={<Search className="w-4 h-4" />}
+                leftIcon={<Search className="w-4 h-4 text-slate-400" />}
               />
             </div>
 
@@ -542,12 +633,13 @@ export function TeacherClassDetailPage() {
                   setMemberStatusFilter(e.target.value);
                   setMemberPage(1);
                 }}
-                className="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-700 shadow-xs focus:border-amber-500 focus:outline-none"
+                className="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-700 shadow-xs focus:border-amber-500 focus:outline-none cursor-pointer"
               >
                 <option value="ACTIVE">Đang học (ACTIVE)</option>
                 <option value="ALL">Tất cả trạng thái</option>
                 <option value="REMOVED">Đã xóa (REMOVED)</option>
                 <option value="LEFT">Đã rời lớp (LEFT)</option>
+                <option value="INACTIVE">Tạm ngưng (INACTIVE)</option>
               </select>
             </div>
           </div>
@@ -657,9 +749,23 @@ export function TeacherClassDetailPage() {
         </div>
       )}
 
-      {/* Tab: YÊU CẦU THAM GIA */}
+      {/* Tab 2: YÊU CẦU THAM GIA */}
       {activeTab === 'requests' && (
         <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
+            <div className="flex-1 sm:max-w-xs">
+              <Input
+                placeholder="Tìm yêu cầu theo tên, email, sđt..."
+                value={requestSearch}
+                onChange={(e) => {
+                  setRequestSearch(e.target.value);
+                  setRequestPage(1);
+                }}
+                leftIcon={<Search className="w-4 h-4 text-slate-400" />}
+              />
+            </div>
+          </div>
+
           {isRequestsError ? (
             <ErrorState
               title="Không thể tải danh sách yêu cầu"
@@ -674,7 +780,7 @@ export function TeacherClassDetailPage() {
                     <TableHead>Học sinh gửi yêu cầu</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Số điện thoại</TableHead>
-                    <TableHead>Thời gian yêu cầu</TableHead>
+                    <TableHead>Thời gian gửi</TableHead>
                     <TableHead className="text-right">Hành động</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -687,7 +793,11 @@ export function TeacherClassDetailPage() {
                         <EmptyState
                           icon={<Clock className="w-8 h-8 text-slate-400" />}
                           title="Không có yêu cầu nào đang chờ duyệt"
-                          description="Khi học sinh nhập mã tham gia lớp, yêu cầu sẽ xuất hiện tại đây để bạn phê duyệt."
+                          description={
+                            requestSearch
+                              ? 'Không tìm thấy yêu cầu nào phù hợp với từ khóa tìm kiếm.'
+                              : 'Khi học sinh nhập mã tham gia lớp, yêu cầu gia nhập sẽ hiển thị tại đây để bạn xem xét.'
+                          }
                         />
                       </TableCell>
                     </TableRow>
@@ -730,7 +840,7 @@ export function TeacherClassDetailPage() {
                                   setProcessingRequestId(req.id);
                                   rejectRequestMutation.mutate(req.id);
                                 }}
-                                className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200"
+                                className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200 cursor-pointer"
                               >
                                 <XCircle className="w-3.5 h-3.5 mr-1" />
                                 Từ chối
@@ -744,6 +854,7 @@ export function TeacherClassDetailPage() {
                                   setProcessingRequestId(req.id);
                                   approveRequestMutation.mutate(req.id);
                                 }}
+                                className="bg-amber-700 hover:bg-amber-800 text-white cursor-pointer"
                               >
                                 <CheckCircle className="w-3.5 h-3.5 mr-1" />
                                 Duyệt
@@ -771,23 +882,32 @@ export function TeacherClassDetailPage() {
         </div>
       )}
 
-      {/* Tab: TỔNG QUAN LỚP HỌC */}
+      {/* Tab 3: BUỔI HỌC CỦA LỚP */}
+      {activeTab === 'sessions' && (
+        <TeacherClassSessionsTab classId={classId!} />
+      )}
+
+      {/* Tab 4: TỔNG QUAN LỚP HỌC */}
       {activeTab === 'overview' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
-            <h3 className="text-base font-bold text-slate-900">Thông tin chung</h3>
+            <h3 className="text-base font-bold text-slate-900">Thông tin chi tiết</h3>
             <div className="divide-y divide-slate-100 text-sm">
               <div className="py-2.5 flex justify-between">
                 <span className="text-slate-500">Tên lớp:</span>
                 <span className="font-semibold text-slate-900">{classData.name}</span>
               </div>
               <div className="py-2.5 flex justify-between">
-                <span className="text-slate-500">Trạng thái:</span>
-                <Badge className={statusMeta.badgeClass}>{statusMeta.label}</Badge>
+                <span className="text-slate-500">Mã lớp hệ thống:</span>
+                <span className="font-mono text-slate-700">{classData.classCode || classData.id}</span>
               </div>
               <div className="py-2.5 flex justify-between">
-                <span className="text-slate-500">Mã tham gia:</span>
+                <span className="text-slate-500">Mã tham gia học sinh:</span>
                 <span className="font-mono font-bold text-amber-900">{classData.joinCode}</span>
+              </div>
+              <div className="py-2.5 flex justify-between">
+                <span className="text-slate-500">Trạng thái:</span>
+                <Badge className={statusMeta.badgeClass}>{statusMeta.label}</Badge>
               </div>
               <div className="py-2.5 flex justify-between">
                 <span className="text-slate-500">Học phí tháng:</span>
@@ -802,7 +922,7 @@ export function TeacherClassDetailPage() {
                 </span>
               </div>
               <div className="py-2.5 flex justify-between">
-                <span className="text-slate-500">Ngày tạo:</span>
+                <span className="text-slate-500">Ngày tạo lớp:</span>
                 <span className="text-slate-700">{formatDateTime(classData.createdAt)}</span>
               </div>
             </div>
@@ -825,12 +945,12 @@ export function TeacherClassDetailPage() {
                     rel="noreferrer"
                     className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors shrink-0 cursor-pointer"
                   >
-                    <span>Vào lớp</span>
+                    <span>Vào phòng</span>
                     <ExternalLink className="w-3.5 h-3.5" />
                   </a>
                 </div>
                 <p className="text-xs text-slate-500">
-                  Link Google Meet mặc định này sẽ tự động gắn vào các buổi học của lớp nếu không thiết lập link riêng.
+                  Link Google Meet mặc định của lớp học được dùng cho các buổi học không thiết lập link riêng.
                 </p>
               </div>
             ) : (
@@ -840,6 +960,7 @@ export function TeacherClassDetailPage() {
                   size="sm"
                   variant="outline"
                   onClick={() => setIsEditOpen(true)}
+                  className="cursor-pointer"
                 >
                   Thêm link Meet
                 </Button>
@@ -920,10 +1041,15 @@ export function TeacherClassDetailPage() {
           onConfirm={() => removeMemberMutation.mutate(memberToRemove.student.id)}
           title="Xóa học sinh khỏi lớp học?"
           description={
-            <p>
-              Bạn có chắc chắn muốn xóa học sinh{' '}
-              <strong className="text-slate-900">{memberToRemove.student.fullName}</strong> khỏi lớp học này? Trạng thái của học sinh sẽ được chuyển sang REMOVED và lịch sử học tập vẫn được bảo tồn.
-            </p>
+            <div className="space-y-2">
+              <p>
+                Bạn có chắc chắn muốn xóa học sinh{' '}
+                <strong className="text-slate-900">{memberToRemove.student.fullName}</strong> khỏi lớp học này?
+              </p>
+              <p className="text-xs text-slate-500">
+                Thao tác này sẽ chuyển trạng thái của học sinh thành <strong>REMOVED</strong>. Tài khoản của học sinh không bị xóa khỏi hệ thống và lịch sử học tập được bảo tồn.
+              </p>
+            </div>
           }
           confirmLabel="Xóa học sinh"
           variant="danger"

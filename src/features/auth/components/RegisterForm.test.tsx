@@ -32,7 +32,7 @@ describe('RegisterForm', () => {
     renderRegisterForm();
 
     expect(screen.getByLabelText(/họ và tên \*/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/email \*/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/số điện thoại \*/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/ngày sinh \(tùy chọn\)/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/^mật khẩu \*/i)).toBeInTheDocument();
@@ -50,7 +50,6 @@ describe('RegisterForm', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/vui lòng nhập họ và tên/i)).toBeInTheDocument();
-      expect(screen.getByText(/vui lòng nhập email/i)).toBeInTheDocument();
       expect(screen.getByText(/vui lòng nhập số điện thoại/i)).toBeInTheDocument();
       expect(screen.getByText(/mật khẩu phải có ít nhất 6 ký tự/i)).toBeInTheDocument();
       expect(screen.getByText(/vui lòng xác nhận mật khẩu/i)).toBeInTheDocument();
@@ -75,7 +74,7 @@ describe('RegisterForm', () => {
   it('validates invalid email format', async () => {
     renderRegisterForm();
 
-    await userEvent.type(screen.getByLabelText(/email \*/i), 'invalid-email');
+    await userEvent.type(screen.getByLabelText(/email/i), 'invalid-email');
     await userEvent.click(screen.getByRole('button', { name: /^đăng ký tài khoản$/i }));
 
     await waitFor(() => {
@@ -175,7 +174,7 @@ describe('RegisterForm', () => {
     renderRegisterForm({ onSuccess: handleSuccess });
 
     await userEvent.type(screen.getByLabelText(/họ và tên \*/i), '  Nguyễn Văn A  ');
-    await userEvent.type(screen.getByLabelText(/email \*/i), '  nguyenvana@example.com  ');
+    await userEvent.type(screen.getByLabelText(/email/i), '  nguyenvana@example.com  ');
     await userEvent.type(screen.getByLabelText(/số điện thoại \*/i), '  0901234567  ');
     fireEvent.change(screen.getByLabelText(/ngày sinh \(tùy chọn\)/i), {
       target: { value: '2005-08-15' },
@@ -227,7 +226,7 @@ describe('RegisterForm', () => {
     renderRegisterForm();
 
     await userEvent.type(screen.getByLabelText(/họ và tên \*/i), 'Trần Thị B');
-    await userEvent.type(screen.getByLabelText(/email \*/i), 'tranthib@example.com');
+    await userEvent.type(screen.getByLabelText(/email/i), 'tranthib@example.com');
     await userEvent.type(screen.getByLabelText(/số điện thoại \*/i), '0987654321');
     await userEvent.type(screen.getByLabelText(/^mật khẩu \*/i), 'Password456');
     await userEvent.type(screen.getByLabelText(/xác nhận mật khẩu \*/i), 'Password456');
@@ -243,6 +242,45 @@ describe('RegisterForm', () => {
       });
       const sentPayload = vi.mocked(authService.register).mock.calls[0][0];
       expect(sentPayload).not.toHaveProperty('dateOfBirth');
+      expect(screen.getByTestId('register-success-view')).toBeInTheDocument();
+    });
+  });
+
+  it('submits form successfully when both email and dateOfBirth are omitted (minimal RegisterDto)', async () => {
+    const mockUser = {
+      id: 'student-789',
+      fullName: 'Phạm Văn D',
+      email: null,
+      phone: '0911223344',
+      role: 'STUDENT' as const,
+      avatarUrl: null,
+      isActive: true,
+    };
+
+    vi.mocked(authService.register).mockResolvedValueOnce({
+      message: 'Đăng ký thành công',
+      user: mockUser,
+    });
+
+    renderRegisterForm();
+
+    await userEvent.type(screen.getByLabelText(/họ và tên \*/i), 'Phạm Văn D');
+    await userEvent.type(screen.getByLabelText(/số điện thoại \*/i), '0911223344');
+    await userEvent.type(screen.getByLabelText(/^mật khẩu \*/i), 'Password789');
+    await userEvent.type(screen.getByLabelText(/xác nhận mật khẩu \*/i), 'Password789');
+
+    await userEvent.click(screen.getByRole('button', { name: /^đăng ký tài khoản$/i }));
+
+    await waitFor(() => {
+      expect(authService.register).toHaveBeenCalledWith({
+        fullName: 'Phạm Văn D',
+        phone: '0911223344',
+        password: 'Password789',
+      });
+      const sentPayload = vi.mocked(authService.register).mock.calls[0][0];
+      expect(sentPayload).not.toHaveProperty('email');
+      expect(sentPayload).not.toHaveProperty('dateOfBirth');
+      expect(sentPayload).not.toHaveProperty('confirmPassword');
       expect(screen.getByTestId('register-success-view')).toBeInTheDocument();
     });
   });
@@ -265,7 +303,7 @@ describe('RegisterForm', () => {
     renderRegisterForm();
 
     const nameInput = screen.getByLabelText(/họ và tên \*/i);
-    const emailInput = screen.getByLabelText(/email \*/i);
+    const emailInput = screen.getByLabelText(/email/i);
     const phoneInput = screen.getByLabelText(/số điện thoại \*/i);
 
     await userEvent.type(nameInput, 'Lê Văn C');
@@ -295,7 +333,7 @@ describe('RegisterForm', () => {
     renderRegisterForm();
 
     await userEvent.type(screen.getByLabelText(/họ và tên \*/i), 'Lê Văn C');
-    await userEvent.type(screen.getByLabelText(/email \*/i), 'test@example.com');
+    await userEvent.type(screen.getByLabelText(/email/i), 'test@example.com');
     await userEvent.type(screen.getByLabelText(/số điện thoại \*/i), '0912345678');
     await userEvent.type(screen.getByLabelText(/^mật khẩu \*/i), 'Password123');
     await userEvent.type(screen.getByLabelText(/xác nhận mật khẩu \*/i), 'Password123');

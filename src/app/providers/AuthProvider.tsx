@@ -35,12 +35,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (refreshToken) {
           try {
             const refreshed = await authService.refresh({ refreshToken });
-            storage.setAccessToken(refreshed.tokens.accessToken);
-            storage.setRefreshToken(refreshed.tokens.refreshToken);
-            const profile = await authService.getUserMe();
-            if (isMounted) {
-              setUser(profile);
-              storage.setUser(profile);
+            const newAccess =
+              refreshed?.tokens?.accessToken ||
+              (refreshed as unknown as { accessToken?: string })?.accessToken;
+            const newRefresh =
+              refreshed?.tokens?.refreshToken ||
+              (refreshed as unknown as { refreshToken?: string })?.refreshToken;
+
+            if (newAccess && newRefresh) {
+              storage.setAccessToken(newAccess);
+              storage.setRefreshToken(newRefresh);
+              const profile = await authService.getUserMe();
+              if (isMounted) {
+                setUser(profile);
+                storage.setUser(profile);
+              }
+            } else {
+              throw new Error('Dữ liệu token không hợp lệ');
             }
           } catch {
             storage.clearAuth();

@@ -2,7 +2,12 @@ import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import { storage } from './storage';
 import type { RefreshTokenResponse } from '@/types/auth.types';
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+const envApiUrl =
+  import.meta.env.VITE_API_BASE_URL ||
+  import.meta.env.VITE_API_URL ||
+  'http://localhost:3000';
+
+export const API_BASE_URL = envApiUrl.replace(/\/+$/, '');
 
 interface RetryableRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
@@ -59,6 +64,7 @@ apiClient.interceptors.response.use(
     const url = originalRequest.url || '';
     const isAuthRoute =
       url.includes('/auth/login') ||
+      url.includes('/auth/register') ||
       url.includes('/auth/refresh') ||
       url.includes('/auth/logout') ||
       url.includes('/auth/zalo/exchange') ||
@@ -99,8 +105,15 @@ apiClient.interceptors.response.use(
           { headers: { 'Content-Type': 'application/json' }, timeout: 10000 },
         );
 
-        const newAccessToken = response.data.tokens.accessToken;
-        const newRefreshToken = response.data.tokens.refreshToken;
+        const data = response.data;
+        const newAccessToken =
+          data?.tokens?.accessToken || (data as unknown as { accessToken?: string })?.accessToken;
+        const newRefreshToken =
+          data?.tokens?.refreshToken || (data as unknown as { refreshToken?: string })?.refreshToken;
+
+        if (!newAccessToken || !newRefreshToken) {
+          throw new Error('Dữ liệu làm mới token không hợp lệ từ máy chủ.');
+        }
 
         storage.setAccessToken(newAccessToken);
         storage.setRefreshToken(newRefreshToken);
@@ -147,6 +160,16 @@ export function getApiErrorMessage(error: unknown): string {
     }
 
     const data = error.response.data as { message?: string | string[]; error?: string } | undefined;
+
+    if (import.meta.env.DEV && typeof console !== 'undefined') {
+      console.warn('[API Error Debug]:', {
+        status: error.response.status,
+        url: error.config?.url,
+        method: error.config?.method,
+        data: error.response.data,
+      });
+    }
+
     if (data?.message) {
       if (Array.isArray(data.message)) {
         return data.message.join('. ');

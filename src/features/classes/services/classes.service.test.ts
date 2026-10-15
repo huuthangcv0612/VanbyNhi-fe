@@ -142,6 +142,61 @@ describe('teacherClassesService', () => {
     expect(apiClient.delete).toHaveBeenCalledWith('/teacher/classes/c1/members/s1');
     expect(res).toEqual(mockRes);
   });
+
+  it('getClassSessions: sends GET /teacher/classes/:classId/sessions with params', async () => {
+    const mockRes = {
+      items: [{ id: 'sess-1', title: 'Buổi 1', status: 'SCHEDULED' }],
+      pagination: { total: 1, page: 1, limit: 10, totalPages: 1 },
+    };
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ data: mockRes });
+
+    const res = await teacherClassesService.getClassSessions('c1', { page: 1, limit: 10, status: 'SCHEDULED' });
+
+    expect(apiClient.get).toHaveBeenCalledWith('/teacher/classes/c1/sessions', {
+      params: { page: 1, limit: 10, status: 'SCHEDULED' },
+    });
+    expect(res).toEqual(mockRes);
+  });
+
+  it('getSessionDetail: sends GET /teacher/sessions/:sessionId', async () => {
+    const mockRes = {
+      id: 'sess-1',
+      title: 'Buổi 1',
+      status: 'SCHEDULED',
+    };
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ data: mockRes });
+
+    const res = await teacherClassesService.getSessionDetail('sess-1');
+
+    expect(apiClient.get).toHaveBeenCalledWith('/teacher/sessions/sess-1');
+    expect(res).toEqual(mockRes);
+  });
+
+  it('startSession: sends POST /teacher/sessions/:sessionId/start', async () => {
+    const mockRes = {
+      message: 'Bắt đầu buổi học thành công (LIVE)',
+      session: { id: 'sess-1', status: 'IN_PROGRESS' },
+    };
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: mockRes });
+
+    const res = await teacherClassesService.startSession('sess-1');
+
+    expect(apiClient.post).toHaveBeenCalledWith('/teacher/sessions/sess-1/start');
+    expect(res).toEqual(mockRes);
+  });
+
+  it('endSession: sends POST /teacher/sessions/:sessionId/end', async () => {
+    const mockRes = {
+      message: 'Kết thúc buổi học thành công (COMPLETED)',
+      session: { id: 'sess-1', status: 'COMPLETED' },
+    };
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: mockRes });
+
+    const res = await teacherClassesService.endSession('sess-1');
+
+    expect(apiClient.post).toHaveBeenCalledWith('/teacher/sessions/sess-1/end');
+    expect(res).toEqual(mockRes);
+  });
 });
 
 describe('studentClassesService', () => {
@@ -228,6 +283,76 @@ describe('studentClassesService', () => {
     const res = await studentClassesService.leaveClass('c1');
 
     expect(apiClient.delete).toHaveBeenCalledWith('/student/classes/c1/membership');
+    expect(res).toEqual(mockRes);
+  });
+
+  it('getClassSessions: sends GET /student/classes/:classId/sessions with params', async () => {
+    const mockRes = {
+      items: [
+        {
+          id: 'sess-1',
+          title: 'Buổi 1: Vợ Nhặt',
+          startTime: '2026-10-15T19:00:00Z',
+          endTime: '2026-10-15T21:00:00Z',
+          status: 'SCHEDULED',
+          canJoinMeet: true,
+          meetUrl: 'https://meet.google.com/abc-defg-hij',
+        },
+      ],
+      pagination: { total: 1, page: 1, limit: 10, totalPages: 1 },
+    };
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ data: mockRes });
+
+    const res = await studentClassesService.getClassSessions('c1', { page: 1, limit: 10, status: 'SCHEDULED' });
+
+    expect(apiClient.get).toHaveBeenCalledWith('/student/classes/c1/sessions', {
+      params: { page: 1, limit: 10, status: 'SCHEDULED' },
+    });
+    expect(res).toEqual(mockRes);
+  });
+
+  it('getSessionDetail: sends GET /student/sessions/:sessionId', async () => {
+    const mockRes = {
+      id: 'sess-1',
+      title: 'Buổi 1',
+      materials: [],
+      assignments: [],
+    };
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ data: mockRes });
+
+    const res = await studentClassesService.getSessionDetail('sess-1');
+
+    expect(apiClient.get).toHaveBeenCalledWith('/student/sessions/sess-1');
+    expect(res).toEqual(mockRes);
+  });
+
+  it('getMeetJoinUrl: sends GET /student/sessions/:sessionId/join-meet', async () => {
+    const mockRes = {
+      canJoin: true,
+      meetUrl: 'https://meet.google.com/abc-defg-hij',
+      sessionId: 'sess-1',
+    };
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ data: mockRes });
+
+    const res = await studentClassesService.getMeetJoinUrl('sess-1');
+
+    expect(apiClient.get).toHaveBeenCalledWith('/student/sessions/sess-1/join-meet');
+    expect(res).toEqual(mockRes);
+  });
+
+  it('checkIn: sends POST /student/sessions/:sessionId/check-in with dto', async () => {
+    const mockRes = {
+      message: 'Điểm danh đúng giờ thành công',
+      alreadyCheckedIn: false,
+      attendance: { id: 'att-1', status: 'PRESENT' },
+    };
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: mockRes });
+
+    const res = await studentClassesService.checkIn('sess-1', { note: 'Có mặt đúng giờ' });
+
+    expect(apiClient.post).toHaveBeenCalledWith('/student/sessions/sess-1/check-in', {
+      note: 'Có mặt đúng giờ',
+    });
     expect(res).toEqual(mockRes);
   });
 });

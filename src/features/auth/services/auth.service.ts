@@ -1,4 +1,4 @@
-import { apiClient } from '@/lib/api-client';
+import { apiClient, API_BASE_URL } from '@/lib/api-client';
 import type {
   LoginPayload,
   LoginResponse,
@@ -76,8 +76,7 @@ export const authService = {
    * GET /auth/zalo
    */
   getZaloLoginUrl(): string {
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
-    return `${baseUrl}/auth/zalo`;
+    return `${API_BASE_URL}/auth/zalo`;
   },
 
   /**

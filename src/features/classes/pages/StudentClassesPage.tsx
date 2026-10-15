@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useState, useMemo, type FormEvent } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import {
@@ -7,9 +7,11 @@ import {
   LogIn,
   Clock,
   Video,
-  ExternalLink,
   LogOut,
   User as UserIcon,
+  Calendar,
+  Sparkles,
+  ArrowRight,
 } from 'lucide-react';
 import { studentClassesService } from '../services/classes.service';
 import type { MemberStatus } from '@/types/common.types';
@@ -32,12 +34,15 @@ import {
 import { getApiErrorMessage } from '@/lib/api-client';
 import { useToast } from '@/hooks/useToast';
 import { ConfirmModal } from '../components/ConfirmModal';
+import { NextSessionCard } from '../components/NextSessionCard';
+import { useStudentMeetJoin } from '../hooks/useStudentMeetJoin';
 
 type StudentTab = 'my-classes' | 'requests';
 
 export function StudentClassesPage() {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
+  const { joinMeet, isJoining, joiningSessionId } = useStudentMeetJoin();
 
   const [activeTab, setActiveTab] = useState<StudentTab>('my-classes');
 
@@ -51,7 +56,7 @@ export function StudentClassesPage() {
   // Tab Lớp của tôi: search & paging
   const [classSearch, setClassSearch] = useState('');
   const [classPage, setClassPage] = useState(1);
-  const classLimit = 10;
+  const classLimit = 9;
 
   // Tab Yêu cầu tham gia: status & paging
   const [requestStatusFilter, setRequestStatusFilter] = useState<string>('ALL');
@@ -152,29 +157,58 @@ export function StudentClassesPage() {
     joinMutation.mutate(trimmed);
   };
 
-  const myClasses = classesData?.items || [];
+  const myClasses = useMemo(() => classesData?.items || [], [classesData?.items]);
   const classPagination = classesData?.pagination;
 
   const myRequests = requestsData?.items || [];
   const requestPagination = requestsData?.pagination;
 
+  // Tìm buổi học tiếp theo gần nhất trên toàn bộ các lớp của học sinh
+  const nearestUpcomingSession = useMemo(() => {
+    const sessionsWithClass = myClasses
+      .filter((item) => item.class.nextSession)
+      .map((item) => ({
+        session: item.class.nextSession!,
+        className: item.class.name,
+        classId: item.class.id,
+      }));
+
+    if (sessionsWithClass.length === 0) return null;
+
+    sessionsWithClass.sort(
+      (a, b) =>
+        new Date(a.session.startTime).getTime() - new Date(b.session.startTime).getTime(),
+    );
+
+    return sessionsWithClass[0];
+  }, [myClasses]);
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="Lớp học của tôi"
-        description="Xem danh sách lớp học bạn đang tham gia và gửi yêu cầu vào lớp học mới"
+        description="Quản lý các lớp học trực tuyến, theo dõi buổi học và phòng học Google Meet của bạn"
       />
 
+      {/* Spotlight: Buổi học tiếp theo gần nhất nếu có */}
+      {nearestUpcomingSession && (
+        <NextSessionCard
+          session={nearestUpcomingSession.session}
+          classNameTitle={nearestUpcomingSession.className}
+          classId={nearestUpcomingSession.classId}
+        />
+      )}
+
       {/* Box Tham gia lớp học bằng mã */}
-      <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-5 shadow-xs">
+      <div className="rounded-2xl border border-violet-200/80 bg-gradient-to-r from-violet-50/50 via-stone-50/30 to-amber-50/30 p-5 shadow-xs">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
-            <h3 className="text-base font-bold text-amber-950 flex items-center gap-2">
-              <LogIn className="w-4 h-4 text-amber-700" />
+            <h3 className="text-base font-bold text-violet-950 flex items-center gap-2">
+              <LogIn className="w-4 h-4 text-violet-700" />
               Tham gia lớp học mới
             </h3>
-            <p className="text-xs text-amber-800">
-              Nhập mã tham gia 8 ký tự do giáo viên cung cấp để gửi yêu cầu tham gia lớp.
+            <p className="text-xs text-slate-600">
+              Nhập mã tham gia do giáo viên cung cấp để gửi yêu cầu gia nhập lớp học.
             </p>
           </div>
 
@@ -195,7 +229,7 @@ export function StudentClassesPage() {
               type="submit"
               isLoading={joinMutation.isPending}
               disabled={!joinCode.trim()}
-              className="shrink-0"
+              className="shrink-0 bg-violet-700 hover:bg-violet-800 text-white cursor-pointer"
             >
               Gửi yêu cầu
             </Button>
@@ -217,7 +251,7 @@ export function StudentClassesPage() {
             onClick={() => setActiveTab('my-classes')}
             className={`py-3 text-sm font-medium border-b-2 transition-colors cursor-pointer flex items-center gap-2 ${
               activeTab === 'my-classes'
-                ? 'border-amber-600 text-amber-900 font-semibold'
+                ? 'border-violet-700 text-violet-900 font-bold'
                 : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
             }`}
           >
@@ -233,7 +267,7 @@ export function StudentClassesPage() {
             onClick={() => setActiveTab('requests')}
             className={`py-3 text-sm font-medium border-b-2 transition-colors cursor-pointer flex items-center gap-2 ${
               activeTab === 'requests'
-                ? 'border-amber-600 text-amber-900 font-semibold'
+                ? 'border-violet-700 text-violet-900 font-bold'
                 : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
             }`}
           >
@@ -255,7 +289,7 @@ export function StudentClassesPage() {
                   setClassSearch(e.target.value);
                   setClassPage(1);
                 }}
-                leftIcon={<Search className="w-4 h-4" />}
+                leftIcon={<Search className="w-4 h-4 text-slate-400" />}
               />
             </div>
           </div>
@@ -267,10 +301,10 @@ export function StudentClassesPage() {
               onRetry={() => refetchClasses()}
             />
           ) : isClassesLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <Skeleton className="h-48 rounded-2xl" />
-              <Skeleton className="h-48 rounded-2xl" />
-              <Skeleton className="h-48 rounded-2xl" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              <Skeleton className="h-56 rounded-2xl" />
+              <Skeleton className="h-56 rounded-2xl" />
+              <Skeleton className="h-56 rounded-2xl" />
             </div>
           ) : myClasses.length === 0 ? (
             <EmptyState
@@ -288,18 +322,21 @@ export function StudentClassesPage() {
                 {myClasses.map((item) => {
                   const cls = item.class;
                   const statusMeta = getClassStatusMeta(cls.status);
+                  const nextSess = cls.nextSession;
 
                   return (
                     <div
                       key={item.membershipId}
-                      className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between"
+                      className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs hover:shadow-md hover:border-violet-200 transition-all flex flex-col justify-between"
                     >
-                      <div className="space-y-3">
+                      <div className="space-y-3.5">
                         <div className="flex items-start justify-between gap-2">
-                          <h4 className="font-bold text-base text-slate-900 leading-snug line-clamp-1">
+                          <h4 className="font-bold text-base text-slate-900 leading-snug line-clamp-1 font-serif">
                             {cls.name}
                           </h4>
-                          <Badge className={statusMeta.badgeClass}>{statusMeta.label}</Badge>
+                          <Badge className={statusMeta.badgeClass} size="sm">
+                            {statusMeta.label}
+                          </Badge>
                         </div>
 
                         {cls.description && (
@@ -308,12 +345,12 @@ export function StudentClassesPage() {
                           </p>
                         )}
 
-                        <div className="divide-y divide-slate-100 text-xs text-slate-600 pt-1">
+                        <div className="divide-y divide-slate-100 text-xs text-slate-600">
                           <div className="py-1.5 flex items-center justify-between">
                             <span className="text-slate-400">Giáo viên:</span>
                             <span className="font-medium text-slate-800 flex items-center gap-1">
                               <UserIcon className="w-3 h-3 text-slate-400" />
-                              {cls.teacher?.fullName || 'Giáo viên'}
+                              {cls.teacher?.fullName || 'Giáo viên phụ trách'}
                             </span>
                           </div>
 
@@ -330,18 +367,46 @@ export function StudentClassesPage() {
                           </div>
                         </div>
 
-                        {cls.defaultMeetUrl && (
-                          <div className="pt-1">
-                            <a
-                              href={cls.defaultMeetUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 text-xs font-semibold transition-colors cursor-pointer"
-                            >
-                              <Video className="w-4 h-4" />
-                              <span>Vào phòng học trực tuyến</span>
-                              <ExternalLink className="w-3 h-3" />
-                            </a>
+                        {/* Buổi học tiếp theo của lớp */}
+                        {nextSess ? (
+                          <div className="rounded-xl border border-violet-100 bg-violet-50/50 p-3 space-y-2">
+                            <div className="flex items-center justify-between gap-1">
+                              <span className="text-[11px] font-bold uppercase tracking-wider text-violet-800 flex items-center gap-1">
+                                <Sparkles className="w-3 h-3" />
+                                Buổi tiếp theo
+                              </span>
+                              {nextSess.isLive && (
+                                <span className="text-[10px] font-bold text-rose-600 bg-rose-100 px-1.5 py-0.5 rounded">
+                                  LIVE
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs font-semibold text-slate-800 truncate">
+                              {nextSess.title}
+                            </p>
+                            <p className="text-[11px] text-slate-500 flex items-center gap-1">
+                              <Calendar className="w-3 h-3 text-violet-600" />
+                              {formatDateTime(nextSess.startTime)}
+                            </p>
+
+                            {/* Nút vào Meet nếu canJoinMeet */}
+                            {nextSess.canJoinMeet && (
+                              <Button
+                                type="button"
+                                size="sm"
+                                onClick={() => joinMeet(nextSess.id)}
+                                isLoading={isJoining && joiningSessionId === nextSess.id}
+                                disabled={isJoining && joiningSessionId === nextSess.id}
+                                className="w-full mt-1 bg-violet-700 hover:bg-violet-800 text-white text-xs cursor-pointer"
+                                leftIcon={<Video className="w-3.5 h-3.5" />}
+                              >
+                                Vào Google Meet
+                              </Button>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="rounded-xl border border-slate-100 bg-slate-50 p-2.5 text-center text-xs text-slate-400 italic">
+                            Chưa có buổi học tiếp theo
                           </div>
                         )}
                       </div>
@@ -358,9 +423,10 @@ export function StudentClassesPage() {
 
                         <Link
                           to={`/student/classes/${cls.id}`}
-                          className="inline-flex items-center justify-center px-3 py-1.5 rounded-lg bg-amber-600 text-white text-xs font-medium hover:bg-amber-700 transition-colors cursor-pointer"
+                          className="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-xl bg-violet-700 text-white text-xs font-semibold hover:bg-violet-800 transition-colors cursor-pointer shadow-xs"
                         >
-                          Chi tiết lớp
+                          <span>Vào lớp học</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
                         </Link>
                       </div>
                     </div>
@@ -394,7 +460,7 @@ export function StudentClassesPage() {
                   setRequestStatusFilter(e.target.value);
                   setRequestPage(1);
                 }}
-                className="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-700 shadow-xs focus:border-amber-500 focus:outline-none"
+                className="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-700 shadow-xs focus:border-violet-500 focus:outline-none cursor-pointer"
               >
                 <option value="ALL">Tất cả trạng thái</option>
                 <option value="PENDING">Chờ duyệt (PENDING)</option>

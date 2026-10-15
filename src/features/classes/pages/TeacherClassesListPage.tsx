@@ -1,18 +1,12 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
 import {
   BookOpen,
   Search,
   Plus,
-  Copy,
-  Check,
   Users,
   CheckCircle2,
-  Lock,
-  Unlock,
-  ExternalLink,
-  Edit2,
+  X,
 } from 'lucide-react';
 import { teacherClassesService } from '../services/classes.service';
 import type { ClassItem, TeacherCreateClassDto, TeacherUpdateClassDto } from '../types/class.types';
@@ -20,17 +14,15 @@ import type { ClassStatus } from '@/types/common.types';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 import { Pagination } from '@/components/ui/pagination';
-import { SkeletonTableRows } from '@/components/ui/skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
-import { getClassStatusMeta, formatCurrency, formatDate } from '@/utils/formatters';
 import { getApiErrorMessage } from '@/lib/api-client';
 import { useToast } from '@/hooks/useToast';
 import { ClassFormModal } from '../components/ClassFormModal';
 import { ConfirmModal } from '../components/ConfirmModal';
+import { TeacherClassCard } from '../components/TeacherClassCard';
 
 export function TeacherClassesListPage() {
   const queryClient = useQueryClient();
@@ -39,9 +31,9 @@ export function TeacherClassesListPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
-  const limit = 10;
+  const limit = 9;
 
-  // Modal tạo / sửa
+  // Modal tạo / sửa lớp
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingClass, setEditingClass] = useState<ClassItem | null>(null);
 
@@ -57,18 +49,19 @@ export function TeacherClassesListPage() {
       teacherClassesService.getMyClasses({
         page,
         limit,
-        search: search || undefined,
+        search: search.trim() ? search.trim() : undefined,
         status: statusFilter !== 'ALL' ? (statusFilter as ClassStatus) : undefined,
       }),
   });
 
+  // Giữ nguyên thứ tự chính xác từ Backend (đã được sắp xếp theo priority)
   const classes = data?.items || [];
   const pagination = data?.pagination;
 
-  // Thống kê sơ bộ
-  const totalClasses = pagination?.total || classes.length;
-  const activeClasses = classes.filter((c) => c.status === 'ACTIVE').length;
-  const totalActiveStudents = classes.reduce(
+  // Thống kê thực tế từ dữ liệu
+  const totalClasses = pagination?.total ?? classes.length;
+  const activeClassesOnPage = classes.filter((c) => c.status === 'ACTIVE').length;
+  const totalActiveStudentsOnPage = classes.reduce(
     (acc, curr) => acc + (curr.activeStudentCount || 0),
     0,
   );
@@ -84,6 +77,13 @@ export function TeacherClassesListPage() {
       });
       queryClient.invalidateQueries({ queryKey: ['teacher-classes'] });
     },
+    onError: (err) => {
+      showToast({
+        type: 'error',
+        title: 'Không thể tạo lớp học',
+        message: getApiErrorMessage(err),
+      });
+    },
   });
 
   // Mutation sửa lớp
@@ -97,6 +97,14 @@ export function TeacherClassesListPage() {
         message: `Đã lưu thay đổi cho lớp "${res.class.name}"`,
       });
       queryClient.invalidateQueries({ queryKey: ['teacher-classes'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-class-detail', res.class.id] });
+    },
+    onError: (err) => {
+      showToast({
+        type: 'error',
+        title: 'Không thể cập nhật lớp học',
+        message: getApiErrorMessage(err),
+      });
     },
   });
 
@@ -111,6 +119,7 @@ export function TeacherClassesListPage() {
         message: vars.status === 'CLOSED' ? 'Đã đóng lớp học' : 'Đã mở lại lớp học',
       });
       queryClient.invalidateQueries({ queryKey: ['teacher-classes'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-class-detail', vars.id] });
       setStatusModalTarget(null);
     },
     onError: (err) => {
@@ -141,30 +150,46 @@ export function TeacherClassesListPage() {
     }
   };
 
+  const handleSearchChange = (val: string) => {
+    setSearch(val);
+    setPage(1);
+  };
+
+  const handleClearSearch = () => {
+    setSearch('');
+    setPage(1);
+  };
+
+  const handleStatusChange = (val: string) => {
+    setStatusFilter(val);
+    setPage(1);
+  };
+
   return (
     <div className="space-y-6">
+      {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <PageHeader
           title="Quản lý Lớp học"
-          description="Danh sách và quản lý các lớp học do bạn trực tiếp phụ trách giảng dạy"
+          description="Danh sách các lớp học do bạn giảng dạy — sắp xếp tự động theo lớp đang diễn ra và sắp tới"
         />
         <Button
           onClick={() => {
             setEditingClass(null);
             setIsFormOpen(true);
           }}
-          className="self-start sm:self-auto shrink-0"
+          className="self-start sm:self-auto shrink-0 bg-amber-700 hover:bg-amber-800 text-white cursor-pointer"
         >
           <Plus className="w-4 h-4 mr-1.5" />
           Tạo lớp mới
         </Button>
       </div>
 
-      {/* Thẻ thống kê */}
+      {/* Overview Statistics (chỉ dựa trên dữ liệu thực tế) */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-700 border border-amber-200">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-700 border border-amber-200 shrink-0">
               <BookOpen className="w-5 h-5" />
             </div>
             <div>
@@ -176,219 +201,128 @@ export function TeacherClassesListPage() {
 
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
               <CheckCircle2 className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Lớp đang mở</p>
-              <p className="text-2xl font-bold text-slate-900">{activeClasses}</p>
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Đang mở (trang này)</p>
+              <p className="text-2xl font-bold text-slate-900">{activeClassesOnPage}</p>
             </div>
           </div>
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700 border border-blue-200">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700 border border-blue-200 shrink-0">
               <Users className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Học sinh đang học</p>
-              <p className="text-2xl font-bold text-slate-900">{totalActiveStudents}</p>
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Học sinh (trang này)</p>
+              <p className="text-2xl font-bold text-slate-900">{totalActiveStudentsOnPage}</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Bộ lọc tìm kiếm */}
+      {/* Toolbar: Tìm kiếm, Lọc trạng thái */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
-        <div className="flex-1 sm:max-w-md">
+        <div className="relative flex-1 sm:max-w-md">
           <Input
-            placeholder="Tìm theo tên hoặc mã tham gia..."
+            placeholder="Tìm theo tên lớp, mã tham gia hoặc mô tả..."
             value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-            leftIcon={<Search className="w-4 h-4" />}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            leftIcon={<Search className="w-4 h-4 text-slate-400" />}
           />
+          {search && (
+            <button
+              type="button"
+              onClick={handleClearSearch}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded cursor-pointer"
+              title="Xóa tìm kiếm"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
           <label className="text-xs font-medium text-slate-500 whitespace-nowrap">Trạng thái:</label>
           <select
             value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value);
-              setPage(1);
-            }}
-            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 shadow-xs focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+            onChange={(e) => handleStatusChange(e.target.value)}
+            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 shadow-xs focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20 cursor-pointer"
           >
             <option value="ALL">Tất cả trạng thái</option>
             <option value="ACTIVE">Đang mở (ACTIVE)</option>
-            <option value="CLOSED">Đã đóng (CLOSED)</option>
             <option value="INACTIVE">Tạm dừng (INACTIVE)</option>
             <option value="COMPLETED">Đã kết thúc (COMPLETED)</option>
+            <option value="CLOSED">Đã đóng (CLOSED)</option>
           </select>
         </div>
       </div>
 
-      {/* Danh sách lớp học */}
+      {/* Content: Danh sách lớp học dạng Card */}
       {isError ? (
         <ErrorState
           title="Không thể tải danh sách lớp học"
           message={getApiErrorMessage(error)}
           onRetry={() => refetch()}
         />
+      ) : isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="rounded-2xl border border-slate-200 bg-white p-5 space-y-4">
+              <div className="flex justify-between items-center">
+                <Skeleton className="h-5 w-20 rounded-full" />
+                <Skeleton className="h-6 w-12 rounded-lg" />
+              </div>
+              <Skeleton className="h-6 w-3/4 rounded-lg" />
+              <Skeleton className="h-10 rounded-xl" />
+              <div className="space-y-2 pt-2">
+                <Skeleton className="h-4 w-full rounded" />
+                <Skeleton className="h-4 w-4/5 rounded" />
+              </div>
+              <Skeleton className="h-16 rounded-xl" />
+              <Skeleton className="h-10 rounded-xl" />
+            </div>
+          ))}
+        </div>
+      ) : classes.length === 0 ? (
+        <EmptyState
+          icon={<BookOpen className="w-8 h-8 text-slate-400" />}
+          title="Chưa có lớp học nào"
+          description={
+            search || statusFilter !== 'ALL'
+              ? 'Không tìm thấy lớp học nào phù hợp với điều kiện tìm kiếm và lọc hiện tại.'
+              : 'Bạn chưa tạo lớp học nào. Hãy bấm "Tạo lớp mới" để bắt đầu mở lớp giảng dạy.'
+          }
+          actionLabel={!search && statusFilter === 'ALL' ? 'Tạo lớp ngay' : undefined}
+          onAction={
+            !search && statusFilter === 'ALL'
+              ? () => {
+                  setEditingClass(null);
+                  setIsFormOpen(true);
+                }
+              : undefined
+          }
+        />
       ) : (
-        <div className="space-y-4">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Tên lớp học</TableHead>
-                <TableHead>Mã tham gia</TableHead>
-                <TableHead>Sĩ số</TableHead>
-                <TableHead>Học phí / tháng</TableHead>
-                <TableHead>Trạng thái</TableHead>
-                <TableHead>Ngày tạo</TableHead>
-                <TableHead className="text-right">Thao tác</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <SkeletonTableRows rows={5} />
-              ) : classes.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="py-12">
-                    <EmptyState
-                      icon={<BookOpen className="w-8 h-8 text-slate-400" />}
-                      title="Chưa có lớp học nào"
-                      description={
-                        search || statusFilter !== 'ALL'
-                          ? 'Không tìm thấy lớp học nào phù hợp với bộ lọc hiện tại.'
-                          : 'Bạn chưa tạo lớp học nào. Hãy bấm "Tạo lớp mới" để bắt đầu.'
-                      }
-                      actionLabel={!search && statusFilter === 'ALL' ? 'Tạo lớp ngay' : undefined}
-                      onAction={
-                        !search && statusFilter === 'ALL'
-                          ? () => {
-                              setEditingClass(null);
-                              setIsFormOpen(true);
-                            }
-                          : undefined
-                      }
-                    />
-                  </TableCell>
-                </TableRow>
-              ) : (
-                classes.map((cls) => {
-                  const statusMeta = getClassStatusMeta(cls.status);
-                  const isCopied = copiedCode === cls.joinCode;
-
-                  return (
-                    <TableRow key={cls.id} className="hover:bg-slate-50/80 transition-colors">
-                      <TableCell>
-                        <div className="max-w-xs">
-                          <Link
-                            to={`/teacher/classes/${cls.id}`}
-                            className="font-semibold text-slate-900 hover:text-amber-700 transition-colors flex items-center gap-1.5 group"
-                          >
-                            <span>{cls.name}</span>
-                            <ExternalLink className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity text-slate-400" />
-                          </Link>
-                          {cls.description && (
-                            <p className="text-xs text-slate-500 font-normal truncate mt-0.5" title={cls.description}>
-                              {cls.description}
-                            </p>
-                          )}
-                        </div>
-                      </TableCell>
-
-                      <TableCell>
-                        <div className="inline-flex items-center gap-1.5 bg-slate-100/90 hover:bg-slate-200/80 transition-colors px-2.5 py-1 rounded-lg border border-slate-200">
-                          <span className="font-mono text-xs font-bold text-slate-800 tracking-wider">
-                            {cls.joinCode}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => handleCopyCode(cls.joinCode)}
-                            title="Sao chép mã tham gia"
-                            className="text-slate-400 hover:text-slate-700 cursor-pointer p-0.5 rounded transition-colors"
-                          >
-                            {isCopied ? (
-                              <Check className="w-3.5 h-3.5 text-emerald-600" />
-                            ) : (
-                              <Copy className="w-3.5 h-3.5" />
-                            )}
-                          </button>
-                        </div>
-                      </TableCell>
-
-                      <TableCell>
-                        <div className="text-xs font-medium text-slate-700">
-                          <span className="font-bold text-slate-900">
-                            {cls.activeStudentCount ?? 0}
-                          </span>
-                          <span className="text-slate-400"> / </span>
-                          <span>{cls.maxStudents !== null && cls.maxStudents !== undefined ? cls.maxStudents : 'Không giới hạn'}</span>
-                        </div>
-                      </TableCell>
-
-                      <TableCell className="font-medium text-amber-900 text-xs">
-                        {formatCurrency(cls.monthlyTuition)}
-                      </TableCell>
-
-                      <TableCell>
-                        <Badge className={statusMeta.badgeClass}>
-                          {statusMeta.label}
-                        </Badge>
-                      </TableCell>
-
-                      <TableCell className="text-xs text-slate-500">
-                        {formatDate(cls.createdAt)}
-                      </TableCell>
-
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <Link
-                            to={`/teacher/classes/${cls.id}`}
-                            className="inline-flex items-center justify-center p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 text-xs font-medium transition-colors cursor-pointer"
-                            title="Xem chi tiết lớp"
-                          >
-                            Chi tiết
-                          </Link>
-
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setEditingClass(cls);
-                              setIsFormOpen(true);
-                            }}
-                            className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
-                            title="Chỉnh sửa thông tin"
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => setStatusModalTarget(cls)}
-                            className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
-                            title={cls.status === 'CLOSED' ? 'Mở lại lớp học' : 'Đóng lớp học'}
-                          >
-                            {cls.status === 'CLOSED' ? (
-                              <Unlock className="w-3.5 h-3.5 text-emerald-600" />
-                            ) : (
-                              <Lock className="w-3.5 h-3.5 text-amber-600" />
-                            )}
-                          </button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {classes.map((cls) => (
+              <TeacherClassCard
+                key={cls.id}
+                classItem={cls}
+                onEdit={(c) => {
+                  setEditingClass(c);
+                  setIsFormOpen(true);
+                }}
+                onToggleStatus={(c) => setStatusModalTarget(c)}
+                onCopyCode={handleCopyCode}
+                isCopied={copiedCode === cls.joinCode}
+              />
+            ))}
+          </div>
 
           {pagination && pagination.totalPages > 1 && (
             <Pagination
@@ -439,10 +373,15 @@ export function TeacherClassesListPage() {
                 <strong className="text-slate-900">{statusModalTarget.name}</strong>? Khi mở, học sinh mới sẽ có thể gửi yêu cầu tham gia lại bằng mã tham gia.
               </p>
             ) : (
-              <p>
-                Bạn có chắc chắn muốn đóng lớp{' '}
-                <strong className="text-slate-900">{statusModalTarget.name}</strong>? Khi đóng, học sinh sẽ không thể gửi yêu cầu tham gia lớp này nữa.
-              </p>
+              <div className="space-y-2">
+                <p>
+                  Bạn có chắc chắn muốn đóng lớp{' '}
+                  <strong className="text-slate-900">{statusModalTarget.name}</strong>?
+                </p>
+                <p className="text-xs text-slate-500">
+                  Khi đóng, học sinh sẽ không thể gửi yêu cầu tham gia lớp học này nữa. Danh sách học sinh hiện tại vẫn được giữ nguyên.
+                </p>
+              </div>
             )
           }
           confirmLabel={

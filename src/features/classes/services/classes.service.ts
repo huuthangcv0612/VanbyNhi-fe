@@ -21,6 +21,16 @@ import type {
   JoinRequestsResponse,
   StudentClassesResponse,
   StudentRequestsResponse,
+  StudentClassSessionsResponse,
+  QueryStudentClassSessionsParams,
+  StudentSessionDetail,
+  StudentJoinMeetResponse,
+  StudentCheckInDto,
+  StudentCheckInResponse,
+  TeacherClassSessionItem,
+  QueryTeacherClassSessionsParams,
+  TeacherClassSessionsResponse,
+  TeacherSessionDetail,
 } from '../types/class.types';
 import type { ClassStatus } from '@/types/common.types';
 
@@ -173,6 +183,58 @@ export const teacherClassesService = {
     );
     return response.data;
   },
+
+  /**
+   * Lấy danh sách buổi học của lớp (Giáo viên)
+   * GET /teacher/classes/:classId/sessions
+   */
+  async getClassSessions(
+    classId: string,
+    params?: QueryTeacherClassSessionsParams,
+  ): Promise<TeacherClassSessionsResponse> {
+    const response = await apiClient.get<TeacherClassSessionsResponse>(
+      `/teacher/classes/${classId}/sessions`,
+      { params },
+    );
+    return response.data;
+  },
+
+  /**
+   * Xem chi tiết buổi học (Giáo viên)
+   * GET /teacher/sessions/:sessionId
+   */
+  async getSessionDetail(sessionId: string): Promise<TeacherSessionDetail> {
+    const response = await apiClient.get<TeacherSessionDetail>(
+      `/teacher/sessions/${sessionId}`,
+    );
+    return response.data;
+  },
+
+  /**
+   * Bắt đầu buổi học (Chuyển sang IN_PROGRESS / LIVE)
+   * POST /teacher/sessions/:sessionId/start
+   */
+  async startSession(
+    sessionId: string,
+  ): Promise<{ message: string; session: TeacherClassSessionItem }> {
+    const response = await apiClient.post<{ message: string; session: TeacherClassSessionItem }>(
+      `/teacher/sessions/${sessionId}/start`,
+    );
+    return response.data;
+  },
+
+  /**
+   * Kết thúc buổi học (Chuyển sang COMPLETED)
+   * POST /teacher/sessions/:sessionId/end
+   */
+  async endSession(
+    sessionId: string,
+  ): Promise<{ message: string; session: TeacherClassSessionItem }> {
+    const response = await apiClient.post<{ message: string; session: TeacherClassSessionItem }>(
+      `/teacher/sessions/${sessionId}/end`,
+    );
+    return response.data;
+  },
 };
 
 /**
@@ -217,6 +279,58 @@ export const studentClassesService = {
     const response = await apiClient.get<StudentRequestsResponse>('/student/classes/my-requests', {
       params,
     });
+    return response.data;
+  },
+
+  /**
+   * Lấy danh sách buổi học của lớp học sinh đang tham gia
+   * GET /student/classes/:classId/sessions
+   */
+  async getClassSessions(
+    classId: string,
+    params?: QueryStudentClassSessionsParams,
+  ): Promise<StudentClassSessionsResponse> {
+    const response = await apiClient.get<StudentClassSessionsResponse>(
+      `/student/classes/${classId}/sessions`,
+      { params },
+    );
+    return response.data;
+  },
+
+  /**
+   * Chi tiết buổi học dành cho học sinh
+   * GET /student/sessions/:sessionId
+   */
+  async getSessionDetail(sessionId: string): Promise<StudentSessionDetail> {
+    const response = await apiClient.get<StudentSessionDetail>(
+      `/student/sessions/${sessionId}`,
+    );
+    return response.data;
+  },
+
+  /**
+   * Lấy link Google Meet có kiểm tra quyền và cửa sổ 15 phút
+   * GET /student/sessions/:sessionId/join-meet
+   */
+  async getMeetJoinUrl(sessionId: string): Promise<StudentJoinMeetResponse> {
+    const response = await apiClient.get<StudentJoinMeetResponse>(
+      `/student/sessions/${sessionId}/join-meet`,
+    );
+    return response.data;
+  },
+
+  /**
+   * Học sinh tự xác nhận điểm danh trong buổi học
+   * POST /student/sessions/:sessionId/check-in
+   */
+  async checkIn(
+    sessionId: string,
+    dto?: StudentCheckInDto,
+  ): Promise<StudentCheckInResponse> {
+    const response = await apiClient.post<StudentCheckInResponse>(
+      `/student/sessions/${sessionId}/check-in`,
+      dto ?? {},
+    );
     return response.data;
   },
 

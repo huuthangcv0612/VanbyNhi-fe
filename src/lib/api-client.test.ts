@@ -43,13 +43,37 @@ describe('getApiErrorMessage', () => {
     expect(getApiErrorMessage(error)).toContain('Không thể kết nối tới máy chủ');
   });
 
-  it('handles timeout error gracefully', () => {
-    const error = new AxiosError(
-      'timeout of 15000ms exceeded',
-      'ECONNABORTED',
-      {} as InternalAxiosRequestConfig,
-    );
+  it('handles HTTP status codes when response data message is absent', () => {
+    const createError = (status: number) =>
+      new AxiosError(
+        `Request failed with status code ${status}`,
+        'ERR_BAD_REQUEST',
+        {} as InternalAxiosRequestConfig,
+        {},
+        {
+          status,
+          data: {},
+        } as AxiosResponse,
+      );
 
-    expect(getApiErrorMessage(error)).toContain('quá thời gian chờ (timeout)');
+    expect(getApiErrorMessage(createError(400))).toBe('Dữ liệu gửi lên không hợp lệ.');
+    expect(getApiErrorMessage(createError(401))).toBe(
+      'Phiên đăng nhập đã hết hạn hoặc không hợp lệ.',
+    );
+    expect(getApiErrorMessage(createError(403))).toBe(
+      'Bạn không có quyền thực hiện thao tác này.',
+    );
+    expect(getApiErrorMessage(createError(404))).toBe('Không tìm thấy tài nguyên yêu cầu.');
+    expect(getApiErrorMessage(createError(409))).toBe(
+      'Dữ liệu bị xung đột hoặc đã tồn tại trong hệ thống.',
+    );
+    expect(getApiErrorMessage(createError(500))).toBe('Lỗi máy chủ nội bộ. Vui lòng thử lại sau.');
+    expect(getApiErrorMessage(createError(503))).toBe('Đã xảy ra lỗi (503). Vui lòng thử lại.');
+  });
+
+  it('handles standard Error instances and unknown objects', () => {
+    expect(getApiErrorMessage(new Error('Lỗi tùy biến'))).toBe('Lỗi tùy biến');
+    expect(getApiErrorMessage('Something went wrong')).toBe('Đã xảy ra lỗi không xác định.');
+    expect(getApiErrorMessage(null)).toBe('Đã xảy ra lỗi không xác định.');
   });
 });

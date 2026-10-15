@@ -1,5 +1,6 @@
-import type { ClassStatus, MemberStatus, PaginatedResponse } from '@/types/common.types';
+import type { ClassStatus, MemberStatus, PaginatedResponse, SessionStatus } from '@/types/common.types';
 import type { User } from '@/types/auth.types';
+import type { StudentClassItem } from './student-classes.types';
 
 export interface ClassItem {
   id: string;
@@ -23,6 +24,14 @@ export interface ClassItem {
     members: number;
     sessions: number;
   };
+  nextSession?: {
+    id: string;
+    title: string;
+    description: string | null;
+    startTime: string;
+    endTime: string;
+    status: SessionStatus;
+  } | null;
 }
 
 export interface QueryClassesParams {
@@ -94,43 +103,7 @@ export interface StudentJoinClassDto {
   joinCode: string;
 }
 
-export interface StudentClassItem {
-  membershipId: string;
-  joinedAt: string;
-  effectiveTuition: string | number;
-  class: {
-    id: string;
-    name: string;
-    description?: string | null;
-    status: ClassStatus;
-    defaultMeetUrl?: string | null;
-    monthlyTuition: string | number;
-    teacher: {
-      id: string;
-      fullName: string;
-      email?: string | null;
-      phone: string;
-      avatarUrl?: string | null;
-    };
-  };
-}
-
-export interface StudentClassDetail {
-  id: string;
-  name: string;
-  description?: string | null;
-  status: ClassStatus;
-  defaultMeetUrl?: string | null;
-  teacher: {
-    id: string;
-    fullName: string;
-    email?: string | null;
-    phone: string;
-    avatarUrl?: string | null;
-  };
-  joinedAt: string;
-  membershipId: string;
-}
+export * from './student-classes.types';
 
 export interface StudentRequestItem {
   id: string;
@@ -192,3 +165,59 @@ export type ClassMembersResponse = PaginatedResponse<ClassMemberItem>;
 export type JoinRequestsResponse = PaginatedResponse<ClassMemberItem>;
 export type StudentClassesResponse = PaginatedResponse<StudentClassItem>;
 export type StudentRequestsResponse = PaginatedResponse<StudentRequestItem>;
+
+export interface TeacherClassSessionItem {
+  id: string;
+  classId: string;
+  title: string;
+  description: string | null;
+  startTime: string;
+  endTime: string;
+  meetUrl: string | null;
+  status: SessionStatus;
+  createdById: string;
+  createdAt: string;
+  updatedAt: string;
+  class: {
+    id: string;
+    name: string;
+    defaultMeetUrl: string | null;
+  };
+  lessonRecord: { id: string; createdAt: string; updatedAt: string } | null;
+  _count: {
+    attendances: number;
+    materials: number;
+    assignments: number;
+  };
+  effectiveMeetUrl: string | null;
+}
+
+export interface QueryTeacherClassSessionsParams {
+  page?: number;
+  limit?: number;
+  status?: SessionStatus;
+  from?: string;
+  to?: string;
+}
+
+export type TeacherClassSessionsResponse = PaginatedResponse<TeacherClassSessionItem>;
+
+export interface TeacherSessionDetail extends TeacherClassSessionItem {
+  class: {
+    id: string;
+    name: string;
+    classCode: string;
+    defaultMeetUrl: string | null;
+    status: ClassStatus;
+    teacher: {
+      id: string;
+      fullName: string;
+      phone: string | null;
+      email: string;
+    };
+  };
+  createdBy: {
+    id: string;
+    fullName: string;
+  };
+}
