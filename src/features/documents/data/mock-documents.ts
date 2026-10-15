@@ -1,6 +1,22 @@
-import type { DocumentItem } from '../types/document.types';
+import type { LegacyDocumentCategory, DocumentFileType } from '../types/document.types';
 
-export const INITIAL_DOCUMENTS: DocumentItem[] = [
+export interface StudentMockDocumentItem {
+  id: string;
+  title: string;
+  description?: string;
+  category: LegacyDocumentCategory;
+  fileType: DocumentFileType;
+  fileUrl: string;
+  fileSize?: string;
+  targetClassName: string;
+  targetClassId?: string;
+  authorName: string;
+  createdAt: string;
+  downloadsCount: number;
+  viewsCount: number;
+}
+
+export const INITIAL_DOCUMENTS: StudentMockDocumentItem[] = [
   {
     id: 'doc-1',
     title: 'Đề cương tổng hợp kiến thức Ngữ Văn 12 - Ôn thi THPT Quốc Gia',

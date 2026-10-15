@@ -272,3 +272,17 @@ export function getAssignmentStatusMeta(status: AssignmentStatus): { label: stri
       };
   }
 }
+
+/**
+ * Định dạng kích thước tệp tin (bytes -> B, KB, MB, GB)
+ */
+export function formatBytes(bytes: number | null | undefined): string {
+  if (bytes === null || bytes === undefined || isNaN(bytes) || bytes <= 0) {
+    return '0 B';
+  }
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  const num = bytes / Math.pow(k, i);
+  return `${parseFloat(num.toFixed(1))} ${sizes[i] || 'B'}`;
+}

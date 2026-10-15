@@ -23,6 +23,8 @@ import { useToast } from '@/hooks/useToast';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { NextSessionCard } from '../components/NextSessionCard';
 import { ClassSessionsList } from '../components/ClassSessionsList';
+import { StudentClassMaterialsTab } from '../components/StudentClassMaterialsTab';
+import { FileText } from 'lucide-react';
 
 export function StudentClassDetailPage() {
   const { classId } = useParams<{ classId: string }>();
@@ -31,6 +33,7 @@ export function StudentClassDetailPage() {
   const { showToast } = useToast();
 
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'sessions' | 'materials'>('sessions');
 
   const {
     data: classData,
@@ -195,15 +198,41 @@ export function StudentClassDetailPage() {
 
       {/* Main Content Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Cột chính: Danh sách buổi học */}
+        {/* Cột chính: Tab Lịch học / Tài liệu */}
         <div className="lg:col-span-2 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold font-serif text-slate-900">
-              Lịch trình các buổi học
-            </h2>
+          <div className="flex items-center gap-3 border-b border-slate-200">
+            <button
+              type="button"
+              onClick={() => setActiveTab('sessions')}
+              className={`flex items-center gap-2 pb-3 px-1 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
+                activeTab === 'sessions'
+                  ? 'border-amber-700 text-amber-800'
+                  : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
+              }`}
+            >
+              <CalendarDays className="w-4 h-4" />
+              <span>Lịch trình các buổi học</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('materials')}
+              className={`flex items-center gap-2 pb-3 px-1 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
+                activeTab === 'materials'
+                  ? 'border-amber-700 text-amber-800'
+                  : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
+              }`}
+            >
+              <FileText className="w-4 h-4" />
+              <span>Tài liệu lớp học</span>
+            </button>
           </div>
 
-          <ClassSessionsList classId={classData.id} />
+          {activeTab === 'sessions' ? (
+            <ClassSessionsList classId={classData.id} />
+          ) : (
+            <StudentClassMaterialsTab classId={classData.id} />
+          )}
         </div>
 
         {/* Cột phụ: Thông tin giáo viên & tham gia */}

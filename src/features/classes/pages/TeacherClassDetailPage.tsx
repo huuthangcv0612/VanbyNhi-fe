@@ -19,6 +19,7 @@ import {
   CheckCircle,
   XCircle,
   Sparkles,
+  FolderOpen,
 } from 'lucide-react';
 import { teacherClassesService } from '../services/classes.service';
 import type {
@@ -48,8 +49,9 @@ import { useToast } from '@/hooks/useToast';
 import { ClassFormModal } from '../components/ClassFormModal';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { TeacherClassSessionsTab } from '../components/TeacherClassSessionsTab';
+import { TeacherClassMaterialsTab } from '../components/TeacherClassMaterialsTab';
 
-type ActiveTab = 'members' | 'requests' | 'sessions' | 'overview';
+type ActiveTab = 'members' | 'requests' | 'sessions' | 'materials' | 'overview';
 
 export function TeacherClassDetailPage() {
   const { classId } = useParams<{ classId: string }>();
@@ -597,6 +599,19 @@ export function TeacherClassDetailPage() {
 
           <button
             type="button"
+            onClick={() => setActiveTab('materials')}
+            className={`py-3 text-sm font-medium border-b-2 transition-colors cursor-pointer flex items-center gap-2 ${
+              activeTab === 'materials'
+                ? 'border-amber-600 text-amber-900 font-semibold'
+                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+            }`}
+          >
+            <FolderOpen className="w-4 h-4" />
+            <span>Tài liệu lớp học</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => setActiveTab('overview')}
             className={`py-3 text-sm font-medium border-b-2 transition-colors cursor-pointer flex items-center gap-2 ${
               activeTab === 'overview'
@@ -887,7 +902,15 @@ export function TeacherClassDetailPage() {
         <TeacherClassSessionsTab classId={classId!} />
       )}
 
-      {/* Tab 4: TỔNG QUAN LỚP HỌC */}
+      {/* Tab 4: TÀI LIỆU LỚP HỌC */}
+      {activeTab === 'materials' && (
+        <TeacherClassMaterialsTab
+          classId={classId!}
+          classNameTitle={classData?.name}
+        />
+      )}
+
+      {/* Tab 5: TỔNG QUAN LỚP HỌC */}
       {activeTab === 'overview' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
