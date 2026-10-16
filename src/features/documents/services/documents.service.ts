@@ -355,6 +355,58 @@ export const teacherDocumentsService = {
   },
 
   /**
+   * Lấy danh sách tài liệu gắn với buổi học
+   * GET /teacher/sessions/:sessionId/materials
+   */
+  async getSessionMaterials(
+    sessionId: string,
+    params?: { page?: number; limit?: number; search?: string; isPublished?: boolean },
+  ): Promise<ClassMaterialsListResponse> {
+    const response = await apiClient.get<ClassMaterialsListResponse>(
+      `/teacher/sessions/${sessionId}/materials`,
+      { params },
+    );
+    return response.data;
+  },
+
+  /**
+   * Khởi tạo upload trực tiếp tài liệu vào Buổi học
+   * POST /teacher/sessions/:sessionId/materials/upload-url
+   */
+  async initSessionUpload(
+    sessionId: string,
+    dto: InitUploadDto,
+  ): Promise<InitUploadResponse & { sessionId: string; classId: string }> {
+    const payload: InitUploadDto = {
+      title: dto.title.trim(),
+      description: dto.description?.trim() || undefined,
+      originalName: dto.originalName.trim(),
+      mimeType: dto.mimeType,
+      sizeBytes: dto.sizeBytes,
+      categoryId: dto.categoryId || undefined,
+    };
+    const response = await apiClient.post<
+      InitUploadResponse & { sessionId: string; classId: string }
+    >(`/teacher/sessions/${sessionId}/materials/upload-url`, payload);
+    return response.data;
+  },
+
+  /**
+   * Xác nhận hoàn tất upload trực tiếp tài liệu vào Buổi học
+   * POST /teacher/sessions/:sessionId/materials/complete-upload
+   */
+  async completeSessionUpload(
+    sessionId: string,
+    dto: CompleteUploadDto,
+  ): Promise<{ message: string; material: ClassMaterialItem }> {
+    const response = await apiClient.post<{
+      message: string;
+      material: ClassMaterialItem;
+    }>(`/teacher/sessions/${sessionId}/materials/complete-upload`, dto);
+    return response.data;
+  },
+
+  /**
    * Gỡ liên kết tài liệu khỏi lớp hoặc buổi học
    * DELETE /teacher/materials/:materialId
    */

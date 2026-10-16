@@ -221,3 +221,40 @@ export interface TeacherSessionDetail extends TeacherClassSessionItem {
     fullName: string;
   };
 }
+
+export interface TeacherMeetAccessResponse {
+  sessionId: string;
+  title: string;
+  classId: string;
+  className: string;
+  status: SessionStatus;
+  startTime: string;
+  endTime: string;
+  isLive: boolean;
+  canJoin: boolean;
+  meetUrl: string | null;
+  effectiveMeetUrl: string | null;
+  hasValidMeetUrl: boolean;
+}
+
+export interface TeacherLessonRecord {
+  id: string;
+  sessionId: string;
+  content: string;
+  homeworkSummary: string | null;
+  teacherNotes: string | null;
+  coreKnowledge: string | null;
+  incompleteContent: string | null;
+  generalRemarks: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UpsertLessonRecordDto {
+  content: string;
+  homeworkSummary?: string;
+  teacherNotes?: string;
+  coreKnowledge?: string;
+  incompleteContent?: string;
+  generalRemarks?: string;
+}

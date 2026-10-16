@@ -93,9 +93,25 @@ export interface SessionAttendanceResponse {
 export interface SessionAttendanceSummary {
   sessionId: string;
   totalActiveStudents: number;
+  totalStudents?: number;
   totalMarked: number;
+  presentCount?: number;
+  lateCount?: number;
+  absentCount?: number;
+  excusedAbsentCount?: number;
+  unexcusedAbsentCount?: number;
+  notMarkedCount?: number;
   unmarkedCount: number;
   summary: Record<AttendanceStatus, number>;
+}
+
+export interface SingleAttendanceRecordPayload {
+  studentId: string;
+  status: AttendanceStatus;
+  checkedInAt?: string | Date;
+  note?: string;
+  isMakeUp?: boolean;
+  originalSessionId?: string;
 }
 
 export interface BatchAttendanceRecordPayload {

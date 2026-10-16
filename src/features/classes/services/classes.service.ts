@@ -31,6 +31,9 @@ import type {
   QueryTeacherClassSessionsParams,
   TeacherClassSessionsResponse,
   TeacherSessionDetail,
+  TeacherMeetAccessResponse,
+  TeacherLessonRecord,
+  UpsertLessonRecordDto,
 } from '../types/class.types';
 import type { ClassStatus } from '@/types/common.types';
 
@@ -233,6 +236,58 @@ export const teacherClassesService = {
     const response = await apiClient.post<{ message: string; session: TeacherClassSessionItem }>(
       `/teacher/sessions/${sessionId}/end`,
     );
+    return response.data;
+  },
+
+  /**
+   * Lấy quyền truy cập và link Google Meet của buổi học
+   * GET /teacher/sessions/:sessionId/meet-url
+   */
+  async getTeacherMeetAccess(sessionId: string): Promise<TeacherMeetAccessResponse> {
+    const response = await apiClient.get<TeacherMeetAccessResponse>(
+      `/teacher/sessions/${sessionId}/meet-url`,
+    );
+    return response.data;
+  },
+
+  /**
+   * Cập nhật URL Google Meet cho buổi học
+   * PATCH /teacher/sessions/:sessionId/meet-url
+   */
+  async updateTeacherMeetUrl(
+    sessionId: string,
+    meetUrl: string,
+  ): Promise<{ message: string; session: TeacherClassSessionItem }> {
+    const response = await apiClient.patch<{
+      message: string;
+      session: TeacherClassSessionItem;
+    }>(`/teacher/sessions/${sessionId}/meet-url`, { meetUrl });
+    return response.data;
+  },
+
+  /**
+   * Lấy nhật ký buổi học
+   * GET /teacher/sessions/:sessionId/lesson-record
+   */
+  async getTeacherLessonRecord(sessionId: string): Promise<TeacherLessonRecord | null> {
+    const response = await apiClient.get<TeacherLessonRecord | null>(
+      `/teacher/sessions/${sessionId}/lesson-record`,
+    );
+    return response.data;
+  },
+
+  /**
+   * Tạo mới hoặc cập nhật nhật ký buổi học
+   * PUT /teacher/sessions/:sessionId/lesson-record
+   */
+  async upsertTeacherLessonRecord(
+    sessionId: string,
+    dto: UpsertLessonRecordDto,
+  ): Promise<{ message: string; lessonRecord: TeacherLessonRecord }> {
+    const response = await apiClient.put<{
+      message: string;
+      lessonRecord: TeacherLessonRecord;
+    }>(`/teacher/sessions/${sessionId}/lesson-record`, dto);
     return response.data;
   },
 };

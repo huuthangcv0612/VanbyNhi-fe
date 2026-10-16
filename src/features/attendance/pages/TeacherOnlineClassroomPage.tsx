@@ -3,67 +3,73 @@ import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   ArrowLeft,
-  Calendar,
-  Clock,
-  Video,
-  ExternalLink,
   Users,
-  PanelRightClose,
-  PanelRightOpen,
-  User as UserIcon,
-  Sparkles,
+  UserCheck,
+  FileText,
+  BookOpen,
 } from 'lucide-react';
-import { attendanceService } from '../services/attendance.service';
-import { OnlineMeetAttendancePanel } from '../components/OnlineMeetAttendancePanel';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { attendanceService } from '@/features/attendance/services/attendance.service';
+import { teacherClassesService } from '@/features/classes/services/classes.service';
+import { TeacherSessionHeader } from '../components/online-classroom/TeacherSessionHeader';
+import { TeacherSessionStatCards } from '../components/online-classroom/TeacherSessionStatCards';
+import { TeacherAttendanceWorkspace } from '../components/online-classroom/TeacherAttendanceWorkspace';
+import { TeacherMaterialsWorkspace } from '../components/online-classroom/TeacherMaterialsWorkspace';
+import { TeacherLessonRecordWorkspace } from '../components/online-classroom/TeacherLessonRecordWorkspace';
+import { TeacherClassMembersAndHistoryWorkspace } from '../components/online-classroom/TeacherClassMembersAndHistoryWorkspace';
+import { TeacherMeetModal } from '../components/online-classroom/TeacherMeetModal';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ErrorState } from '@/components/feedback/ErrorState';
-import {
-  getSessionStatusMeta,
-  formatDate,
-  formatTime,
-} from '@/utils/formatters';
 import { getApiErrorMessage } from '@/lib/api-client';
+
+type ClassroomTab = 'attendance' | 'materials' | 'lesson-record' | 'history';
 
 export function TeacherOnlineClassroomPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
 
-  // State thu gọn / mở rộng bảng điểm danh trên desktop
-  const [isAttendanceCollapsed, setIsAttendanceCollapsed] = useState(false);
+  // State tab hiện tại
+  const [activeTab, setActiveTab] = useState<ClassroomTab>('attendance');
 
-  // State tab trên mobile / tablet: 'meet' | 'attendance'
-  const [mobileTab, setMobileTab] = useState<'meet' | 'attendance'>('meet');
+  // State modal chỉnh sửa Meet URL
+  const [isMeetModalOpen, setIsMeetModalOpen] = useState(false);
 
-  // Lấy dữ liệu buổi học kèm điểm danh
+  // 1. Lấy dữ liệu buổi học kèm điểm danh
   const {
     data: attendanceData,
-    isLoading,
-    isError,
-    error,
-    refetch,
+    isLoading: isLoadingAttendance,
+    isError: isAttendanceError,
+    error: attendanceError,
+    refetch: refetchAttendance,
   } = useQuery({
     queryKey: ['session-attendance', sessionId],
     queryFn: () => attendanceService.getSessionAttendance(sessionId!),
     enabled: Boolean(sessionId),
   });
 
+  // 2. Lấy dữ liệu chi tiết buổi học (để lấy _count tài liệu, bài tập, v.v.)
+  const { data: sessionDetail } = useQuery({
+    queryKey: ['session-detail', sessionId],
+    queryFn: () => teacherClassesService.getSessionDetail(sessionId!),
+    enabled: Boolean(sessionId),
+  });
+
   const session = attendanceData?.session;
 
-  if (isLoading) {
+  if (isLoadingAttendance) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-8 w-64 rounded-lg" />
         <Skeleton className="h-28 w-full rounded-2xl" />
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[600px]">
-          <Skeleton className="lg:col-span-2 h-full rounded-2xl" />
-          <Skeleton className="h-full rounded-2xl" />
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
+          {Array.from({ length: 7 }).map((_, i) => (
+            <Skeleton key={i} className="h-20 rounded-2xl" />
+          ))}
         </div>
+        <Skeleton className="h-96 w-full rounded-2xl" />
       </div>
     );
   }
 
-  if (isError || !session) {
+  if (isAttendanceError || !session) {
     return (
       <div className="space-y-6">
         <Link
@@ -74,263 +80,148 @@ export function TeacherOnlineClassroomPage() {
           Quay lại danh sách buổi học
         </Link>
         <ErrorState
-          title="Không thể tải thông tin phòng học"
-          message={getApiErrorMessage(error)}
-          onRetry={() => refetch()}
+          title="Không thể tải thông tin phòng học trực tuyến"
+          message={getApiErrorMessage(attendanceError)}
+          onRetry={() => refetchAttendance()}
         />
       </div>
     );
   }
 
-  const statusMeta = getSessionStatusMeta(session.status);
-  const isLive = session.status === 'IN_PROGRESS';
-  const meetUrl = session.meetUrl;
+  const materialsCount = sessionDetail?._count?.materials ?? 0;
+  const effectiveMeetUrl = session.meetUrl || sessionDetail?.class?.defaultMeetUrl || null;
 
   return (
-    <div className="space-y-4">
-      {/* Header buổi học */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1 min-w-0">
-            <div className="flex items-center gap-2 text-xs font-medium text-slate-500 flex-wrap">
-              <Link
-                to="/teacher/classes"
-                className="hover:text-amber-800 transition-colors"
-              >
-                Lớp học
-              </Link>
-              <span>/</span>
-              <Link
-                to={`/teacher/classes/${session.class.id}`}
-                className="hover:text-amber-800 transition-colors font-semibold truncate max-w-xs"
-              >
-                {session.class.name}
-              </Link>
-              <span>/</span>
-              <span className="text-slate-800 font-bold truncate max-w-xs">
-                {session.title}
-              </span>
-            </div>
+    <div className="space-y-5">
+      {/* 1. Header Buổi học & Điều khiển Google Meet / Trạng thái */}
+      <TeacherSessionHeader
+        sessionId={session.id}
+        title={session.title}
+        status={session.status}
+        startTime={session.startTime}
+        endTime={session.endTime}
+        classInfo={{
+          id: session.class.id,
+          name: session.class.name,
+          defaultMeetUrl: sessionDetail?.class?.defaultMeetUrl,
+          teacher: session.class.teacher,
+        }}
+        meetUrl={session.meetUrl}
+      />
 
-            <div className="flex items-center gap-3 flex-wrap pt-1">
-              <h1 className="text-xl sm:text-2xl font-bold font-serif text-slate-900 truncate">
-                {session.title}
-              </h1>
-              {isLive ? (
-                <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-700 border border-rose-200 animate-pulse">
-                  <span className="h-2 w-2 rounded-full bg-rose-600" />
-                  Đang diễn ra (LIVE)
-                </span>
-              ) : (
-                <Badge className={statusMeta.badgeClass}>{statusMeta.label}</Badge>
-              )}
-            </div>
+      {/* 2. Thẻ thống kê số liệu tóm tắt từ Backend */}
+      <TeacherSessionStatCards
+        sessionId={session.id}
+        materialsCount={materialsCount}
+      />
 
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-slate-600 pt-1">
-              <div className="flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5 text-amber-600" />
-                <span>{formatDate(session.startTime)}</span>
-              </div>
-              <div className="flex items-center gap-1 font-mono">
-                <Clock className="w-3.5 h-3.5 text-amber-600" />
-                <span>
-                  {formatTime(session.startTime)} - {formatTime(session.endTime)}
-                </span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Users className="w-3.5 h-3.5 text-slate-400" />
-                <span>Lớp: {session.class.name}</span>
-              </div>
-              {session.class.teacher?.fullName && (
-                <div className="flex items-center gap-1">
-                  <UserIcon className="w-3.5 h-3.5 text-slate-400" />
-                  <span>GV: {session.class.teacher.fullName}</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Quick Meet Action & Toggle Attendance */}
-          <div className="flex items-center gap-2.5 flex-wrap shrink-0">
-            {meetUrl ? (
-              <a
-                href={meetUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-xs transition-colors cursor-pointer"
-              >
-                <Video className="w-4 h-4" />
-                <span>Mở Google Meet phòng học</span>
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
-            ) : (
-              <span className="text-xs text-slate-400 italic bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
-                Chưa gắn liên kết Google Meet
-              </span>
-            )}
-
-            {/* Nút thu gọn / mở bảng điểm danh trên desktop */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsAttendanceCollapsed(!isAttendanceCollapsed)}
-              className="hidden lg:inline-flex text-xs cursor-pointer"
-              leftIcon={
-                isAttendanceCollapsed ? (
-                  <PanelRightOpen className="w-4 h-4 text-amber-700" />
-                ) : (
-                  <PanelRightClose className="w-4 h-4 text-slate-600" />
-                )
-              }
+      {/* 3. Navigation Tabs Workspace */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-2 shadow-xs">
+        <div className="flex items-center gap-1.5 overflow-x-auto">
+          <button
+            type="button"
+            onClick={() => setActiveTab('attendance')}
+            className={`py-2.5 px-4 rounded-xl text-xs font-semibold flex items-center gap-2 whitespace-nowrap transition-all cursor-pointer ${
+              activeTab === 'attendance'
+                ? 'bg-amber-900 text-white shadow-2xs'
+                : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+            }`}
+          >
+            <UserCheck className="w-4 h-4 text-amber-500" />
+            <span>Bảng điểm danh buổi học</span>
+            <span
+              className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+                activeTab === 'attendance'
+                  ? 'bg-amber-800 text-amber-100'
+                  : 'bg-slate-200 text-slate-700'
+              }`}
             >
-              {isAttendanceCollapsed ? 'Mở điểm danh' : 'Ẩn điểm danh'}
-            </Button>
-          </div>
-        </div>
-
-        {/* Mobile / Tablet Tab switchers */}
-        <div className="lg:hidden flex border-t border-slate-200 pt-3">
-          <button
-            type="button"
-            onClick={() => setMobileTab('meet')}
-            className={`flex-1 py-2 text-xs font-semibold text-center border-b-2 transition-colors cursor-pointer ${
-              mobileTab === 'meet'
-                ? 'border-amber-600 text-amber-900 bg-amber-50/50 rounded-t-lg'
-                : 'border-transparent text-slate-500 hover:text-slate-700'
-            }`}
-          >
-            Phòng học Google Meet
+              {attendanceData?.students?.length || 0}
+            </span>
           </button>
+
           <button
             type="button"
-            onClick={() => setMobileTab('attendance')}
-            className={`flex-1 py-2 text-xs font-semibold text-center border-b-2 transition-colors cursor-pointer ${
-              mobileTab === 'attendance'
-                ? 'border-amber-600 text-amber-900 bg-amber-50/50 rounded-t-lg'
-                : 'border-transparent text-slate-500 hover:text-slate-700'
+            onClick={() => setActiveTab('materials')}
+            className={`py-2.5 px-4 rounded-xl text-xs font-semibold flex items-center gap-2 whitespace-nowrap transition-all cursor-pointer ${
+              activeTab === 'materials'
+                ? 'bg-amber-900 text-white shadow-2xs'
+                : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
             }`}
           >
-            Bảng điểm danh ({attendanceData?.students?.length || 0})
+            <FileText className="w-4 h-4 text-amber-500" />
+            <span>Tài liệu buổi học</span>
+            <span
+              className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+                activeTab === 'materials'
+                  ? 'bg-amber-800 text-amber-100'
+                  : 'bg-slate-200 text-slate-700'
+              }`}
+            >
+              {materialsCount}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('lesson-record')}
+            className={`py-2.5 px-4 rounded-xl text-xs font-semibold flex items-center gap-2 whitespace-nowrap transition-all cursor-pointer ${
+              activeTab === 'lesson-record'
+                ? 'bg-amber-900 text-white shadow-2xs'
+                : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+            }`}
+          >
+            <BookOpen className="w-4 h-4 text-amber-500" />
+            <span>Nhật ký giảng dạy</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('history')}
+            className={`py-2.5 px-4 rounded-xl text-xs font-semibold flex items-center gap-2 whitespace-nowrap transition-all cursor-pointer ${
+              activeTab === 'history'
+                ? 'bg-amber-900 text-white shadow-2xs'
+                : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+            }`}
+          >
+            <Users className="w-4 h-4 text-amber-500" />
+            <span>Học sinh & Lịch sử lớp</span>
           </button>
         </div>
       </div>
 
-      {/* Main Container: Desktop chia 65-70% Meet và 30-35% Attendance */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        {/* Left Area: Google Meet (65-70% width on Desktop = col-span-8 hoặc col-span-12 nếu collapse) */}
-        <div
-          className={`${
-            isAttendanceCollapsed ? 'lg:col-span-12' : 'lg:col-span-8'
-          } ${mobileTab === 'meet' ? 'block' : 'hidden lg:block'} space-y-4`}
-        >
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs flex flex-col justify-between min-h-[500px]">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-                <div className="flex items-center gap-2">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
-                    <Video className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-base text-slate-900">
-                      Khu vực phòng học trực tuyến
-                    </h3>
-                    <p className="text-xs text-slate-500">
-                      Kết nối trực tiếp qua Google Meet chính thức của lớp học
-                    </p>
-                  </div>
-                </div>
+      {/* 4. Tab Content Area */}
+      <div className="transition-all duration-150">
+        {activeTab === 'attendance' && (
+          <TeacherAttendanceWorkspace sessionId={session.id} />
+        )}
 
-                {meetUrl && (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                    Sẵn sàng kết nối
-                  </span>
-                )}
-              </div>
+        {activeTab === 'materials' && (
+          <TeacherMaterialsWorkspace sessionId={session.id} />
+        )}
 
-              {/* Instructions banner */}
-              <div className="bg-gradient-to-r from-violet-50/70 via-stone-50/40 to-amber-50/30 p-5 rounded-2xl border border-violet-100 space-y-3">
-                <div className="flex items-center gap-2 text-violet-900 font-bold text-sm">
-                  <Sparkles className="w-4 h-4 text-amber-600" />
-                  <span>Hướng dẫn trong giờ dạy & Điểm danh:</span>
-                </div>
-                <ul className="text-xs text-slate-600 space-y-2 list-disc pl-5 leading-relaxed">
-                  <li>
-                    Bấm <strong>"Mở Google Meet trong tab mới"</strong> để bắt đầu giảng dạy qua camera và micro của Google Meet.
-                  </li>
-                  <li>
-                    Bảng điểm danh bên phải cho phép bạn đánh dấu hiện diện của học sinh song song trong suốt buổi học.
-                  </li>
-                  <li>
-                    Bạn có thể sử dụng nút <strong>"Tất cả có mặt"</strong> để đánh dấu nhanh, sau đó chỉnh sửa từng học sinh vắng hoặc vào muộn.
-                  </li>
-                  <li>
-                    Kết thúc buổi học, hãy bấm <strong>"Chốt điểm danh"</strong> để hoàn tất số liệu chuyên cần và tính phí.
-                  </li>
-                </ul>
-              </div>
+        {activeTab === 'lesson-record' && (
+          <TeacherLessonRecordWorkspace sessionId={session.id} />
+        )}
 
-              {/* Link card */}
-              <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/60 space-y-3">
-                <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    Đường dẫn phòng Meet:
-                  </span>
-                  {meetUrl && (
-                    <span className="font-mono text-xs text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200 truncate max-w-sm">
-                      {meetUrl}
-                    </span>
-                  )}
-                </div>
-
-                <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3">
-                  <span className="text-xs text-slate-500">
-                    * Mở tab Meet không tự động ghi nhận điểm danh học sinh.
-                  </span>
-                  {meetUrl ? (
-                    <a
-                      href={meetUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-violet-700 hover:bg-violet-800 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer"
-                    >
-                      <Video className="w-4 h-4" />
-                      <span>Mở Google Meet trong tab mới &rarr;</span>
-                    </a>
-                  ) : (
-                    <p className="text-xs text-amber-700 font-medium">
-                      Vui lòng cập nhật link Google Meet trong cấu hình buổi học.
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-6 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
-              <span className="flex items-center gap-1.5">
-                <Users className="w-4 h-4 text-slate-400" />
-                Sĩ số lớp: {attendanceData?.students?.length || 0} học sinh
-              </span>
-              <span>Hệ thống quản lý lớp học Văn Cô Như Ý</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Area: Attendance Panel (30-35% width on Desktop = col-span-4) */}
-        {!isAttendanceCollapsed && (
-          <div
-            className={`lg:col-span-4 ${
-              mobileTab === 'attendance' ? 'block' : 'hidden lg:block'
-            } h-[750px] sticky top-4`}
-          >
-            <OnlineMeetAttendancePanel
-              sessionId={session.id}
-              isCollapsed={isAttendanceCollapsed}
-              onToggleCollapse={() => setIsAttendanceCollapsed(!isAttendanceCollapsed)}
-            />
-          </div>
+        {activeTab === 'history' && (
+          <TeacherClassMembersAndHistoryWorkspace
+            classId={session.class.id}
+            currentSessionId={session.id}
+          />
         )}
       </div>
+
+      {/* Meet Modal fallback */}
+      <TeacherMeetModal
+        isOpen={isMeetModalOpen}
+        onClose={() => setIsMeetModalOpen(false)}
+        sessionId={session.id}
+        currentMeetUrl={effectiveMeetUrl}
+        onSuccess={() => {
+          refetchAttendance();
+        }}
+      />
     </div>
   );
 }

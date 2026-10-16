@@ -3,6 +3,7 @@ import type { PaginatedResponse } from '@/types/common.types';
 import type {
   SessionAttendanceResponse,
   SessionAttendanceSummary,
+  SingleAttendanceRecordPayload,
   BatchAttendancePayload,
   MarkAllPresentPayload,
   CloseAttendanceSessionPayload,
@@ -148,6 +149,43 @@ export const attendanceService = {
       dto,
     );
     return res.data;
+  },
+
+  /**
+   * Điểm danh nhanh cho một học sinh đơn lẻ
+   * POST /sessions/:sessionId/attendance/record
+   */
+  async saveSingleAttendance(
+    sessionId: string,
+    dto: SingleAttendanceRecordPayload,
+  ): Promise<{ message: string; attendance: unknown }> {
+    const res = await apiClient.post<{ message: string; attendance: unknown }>(
+      `/sessions/${sessionId}/attendance/record`,
+      dto,
+    );
+    return res.data;
+  },
+
+  /**
+   * Xuất danh sách điểm danh của buổi học ra file Excel (.xlsx)
+   * GET /sessions/:sessionId/attendance/export
+   */
+  async exportSessionAttendanceExcel(sessionId: string): Promise<void> {
+    const res = await apiClient.get<Blob>(`/sessions/${sessionId}/attendance/export`, {
+      responseType: 'blob',
+    });
+
+    const fallbackName = `DiemDanh_BuoiHoc_${sessionId}_${Date.now()}.xlsx`;
+    const filename = extractFilenameFromHeader(
+      res.headers['content-disposition'],
+      fallbackName,
+    );
+
+    const blob = new Blob([res.data], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+
+    triggerBlobDownload(blob, filename);
   },
 
   /**
