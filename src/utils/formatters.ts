@@ -4,6 +4,8 @@ import type {
   MemberStatus,
   SessionStatus,
   AttendanceStatus,
+  AttendanceSessionStatus,
+  CorrectionRequestStatus,
   TuitionStatus,
   AssignmentStatus,
 } from '@/types/common.types';
@@ -214,10 +216,86 @@ export function getAttendanceStatusMeta(status: AttendanceStatus): { label: stri
         label: 'Đi muộn',
         badgeClass: 'bg-amber-100 text-amber-800 border-amber-200',
       };
+    case 'EXCUSED_ABSENT':
+      return {
+        label: 'Vắng có phép',
+        badgeClass: 'bg-blue-100 text-blue-800 border-blue-200',
+      };
+    case 'UNEXCUSED_ABSENT':
+      return {
+        label: 'Vắng không phép',
+        badgeClass: 'bg-rose-100 text-rose-800 border-rose-200',
+      };
+    case 'NOT_MARKED':
+      return {
+        label: 'Chưa điểm danh',
+        badgeClass: 'bg-slate-100 text-slate-700 border-slate-200',
+      };
     case 'ABSENT':
       return {
         label: 'Vắng mặt',
         badgeClass: 'bg-rose-100 text-rose-800 border-rose-200',
+      };
+    default:
+      return {
+        label: status,
+        badgeClass: 'bg-slate-100 text-slate-700 border-slate-200',
+      };
+  }
+}
+
+/**
+ * Nhãn và màu trạng thái phiên điểm danh (AttendanceSessionStatus)
+ */
+export function getAttendanceSessionStatusMeta(status: AttendanceSessionStatus): { label: string; badgeClass: string } {
+  switch (status) {
+    case 'OPEN':
+      return {
+        label: 'Đang mở',
+        badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+      };
+    case 'DRAFT':
+      return {
+        label: 'Bản nháp',
+        badgeClass: 'bg-amber-100 text-amber-800 border-amber-200',
+      };
+    case 'CLOSED':
+      return {
+        label: 'Đã chốt',
+        badgeClass: 'bg-slate-200 text-slate-800 border-slate-300',
+      };
+    default:
+      return {
+        label: status,
+        badgeClass: 'bg-slate-100 text-slate-700 border-slate-200',
+      };
+  }
+}
+
+/**
+ * Nhãn và màu trạng thái yêu cầu điều chỉnh điểm danh (CorrectionRequestStatus)
+ */
+export function getCorrectionRequestStatusMeta(status: CorrectionRequestStatus): { label: string; badgeClass: string } {
+  switch (status) {
+    case 'PENDING':
+      return {
+        label: 'Chờ xử lý',
+        badgeClass: 'bg-amber-100 text-amber-800 border-amber-200',
+      };
+    case 'APPROVED':
+      return {
+        label: 'Đã chấp nhận',
+        badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+      };
+    case 'REJECTED':
+      return {
+        label: 'Đã từ chối',
+        badgeClass: 'bg-rose-100 text-rose-800 border-rose-200',
+      };
+    default:
+      return {
+        label: status,
+        badgeClass: 'bg-slate-100 text-slate-700 border-slate-200',
       };
   }
 }

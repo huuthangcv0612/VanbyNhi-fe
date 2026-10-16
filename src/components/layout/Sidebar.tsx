@@ -66,6 +66,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           { label: 'Lớp học của tôi', to: '/student/classes', icon: <BookOpen className="w-4 h-4" /> },
           { label: 'Lịch học', to: '/student/schedules', icon: <Calendar className="w-4 h-4" /> },
           { label: 'Tài liệu học tập', to: '/student/documents', icon: <FolderOpen className="w-4 h-4" /> },
+          { label: 'Điểm danh của tôi', to: '/student/attendance', icon: <ClipboardCheck className="w-4 h-4" /> },
           { label: 'Bài tập & Nộp bài', to: '/student/assignments', icon: <FileText className="w-4 h-4" /> },
           { label: 'Học phí cá nhân', to: '/student/tuition', icon: <CreditCard className="w-4 h-4" /> },
           { label: 'Thông báo', to: '/student/notifications', icon: <Bell className="w-4 h-4" /> },

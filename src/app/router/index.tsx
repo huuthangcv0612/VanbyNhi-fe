@@ -84,6 +84,16 @@ const AttendancePage = lazy(() =>
     default: m.AttendancePage,
   })),
 );
+const TeacherOnlineClassroomPage = lazy(() =>
+  import('@/features/attendance/pages/TeacherOnlineClassroomPage').then((m) => ({
+    default: m.TeacherOnlineClassroomPage,
+  })),
+);
+const StudentAttendancePage = lazy(() =>
+  import('@/features/attendance/pages/StudentAttendancePage').then((m) => ({
+    default: m.StudentAttendancePage,
+  })),
+);
 const TuitionPage = lazy(() =>
   import('@/features/tuition/pages/TuitionPage').then((m) => ({ default: m.TuitionPage })),
 );
@@ -232,6 +242,14 @@ const router = createBrowserRouter([
                 ),
               },
               {
+                path: 'sessions/:sessionId',
+                element: (
+                  <SuspenseWrapper>
+                    <TeacherOnlineClassroomPage />
+                  </SuspenseWrapper>
+                ),
+              },
+              {
                 path: 'attendance',
                 element: (
                   <SuspenseWrapper>
@@ -326,6 +344,14 @@ const router = createBrowserRouter([
                 ),
               },
               {
+                path: 'sessions/:sessionId',
+                element: (
+                  <SuspenseWrapper>
+                    <TeacherOnlineClassroomPage />
+                  </SuspenseWrapper>
+                ),
+              },
+              {
                 path: 'attendance',
                 element: (
                   <SuspenseWrapper>
@@ -408,6 +434,14 @@ const router = createBrowserRouter([
                 element: (
                   <SuspenseWrapper>
                     <StudentSchedulesPage />
+                  </SuspenseWrapper>
+                ),
+              },
+              {
+                path: 'attendance',
+                element: (
+                  <SuspenseWrapper>
+                    <StudentAttendancePage />
                   </SuspenseWrapper>
                 ),
               },

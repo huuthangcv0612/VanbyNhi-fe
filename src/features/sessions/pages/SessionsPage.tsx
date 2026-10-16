@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Calendar, Video } from 'lucide-react';
+import { Calendar, Video, UserCheck } from 'lucide-react';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { classesService } from '@/features/classes/services/classes.service';
 import { apiClient } from '@/lib/api-client';
@@ -56,6 +58,9 @@ export function SessionsPage() {
 
   const sessions = sessionsData?.items || [];
 
+  const { user } = useAuth();
+  const baseRoute = user?.role === 'ADMIN' ? '/admin' : '/teacher';
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -100,6 +105,7 @@ export function SessionsPage() {
               <TableHead>Thời gian</TableHead>
               <TableHead>Phòng học trực tuyến</TableHead>
               <TableHead>Trạng thái</TableHead>
+              <TableHead className="text-right">Hành động</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -107,7 +113,7 @@ export function SessionsPage() {
               <SkeletonTableRows rows={4} />
             ) : !activeClassId || sessions.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="py-8">
+                <TableCell colSpan={5} className="py-8">
                   <EmptyState
                     icon={<Calendar className="w-6 h-6 text-slate-400" />}
                     title="Chưa có buổi học nào"
@@ -140,7 +146,7 @@ export function SessionsPage() {
                           className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-800 underline"
                         >
                           <Video className="w-3.5 h-3.5" />
-                          <span>Vào lớp học</span>
+                          <span>Vào Meet</span>
                         </a>
                       ) : (
                         <span className="text-xs text-slate-400">Chưa có liên kết</span>
@@ -150,6 +156,15 @@ export function SessionsPage() {
                       <Badge className={statusMeta.badgeClass}>
                         {statusMeta.label}
                       </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Link
+                        to={`${baseRoute}/sessions/${sess.id}`}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-amber-700 hover:text-amber-800 hover:bg-amber-50 rounded-lg border border-amber-200 transition-colors"
+                      >
+                        <UserCheck className="w-3.5 h-3.5 text-amber-600" />
+                        <span>Điểm danh</span>
+                      </Link>
                     </TableCell>
                   </TableRow>
                 );

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Calendar,
@@ -11,6 +12,7 @@ import {
   FileText,
   FolderOpen,
   Filter,
+  UserCheck,
 } from 'lucide-react';
 import { teacherClassesService } from '../services/classes.service';
 import type { TeacherClassSessionItem } from '../types/class.types';
@@ -261,6 +263,14 @@ export function TeacherClassSessionsTab({ classId }: TeacherClassSessionsTabProp
                     </div>
 
                     <div className="flex items-center gap-2 flex-wrap">
+                      <Link
+                        to={`/teacher/sessions/${sess.id}`}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-amber-300 bg-amber-50/50 text-xs font-semibold text-amber-900 hover:bg-amber-100 transition-colors shadow-2xs"
+                      >
+                        <UserCheck className="w-3.5 h-3.5 text-amber-700" />
+                        <span>Điểm danh & Phòng học</span>
+                      </Link>
+
                       {/* Button Start Session (when SCHEDULED) */}
                       {isScheduled && !isCancelled && !isCompleted && (
                         <Button

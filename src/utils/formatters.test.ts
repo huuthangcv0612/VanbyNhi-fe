@@ -8,6 +8,8 @@ import {
   getMemberStatusMeta,
   getTuitionStatusMeta,
   getAttendanceStatusMeta,
+  getAttendanceSessionStatusMeta,
+  getCorrectionRequestStatusMeta,
 } from './formatters';
 
 describe('formatters', () => {
@@ -84,6 +86,25 @@ describe('formatters', () => {
       expect(getAttendanceStatusMeta('PRESENT').label).toBe('Có mặt');
       expect(getAttendanceStatusMeta('ABSENT').label).toBe('Vắng mặt');
       expect(getAttendanceStatusMeta('LATE').label).toBe('Đi muộn');
+      expect(getAttendanceStatusMeta('EXCUSED_ABSENT').label).toBe('Vắng có phép');
+      expect(getAttendanceStatusMeta('UNEXCUSED_ABSENT').label).toBe('Vắng không phép');
+      expect(getAttendanceStatusMeta('NOT_MARKED').label).toBe('Chưa điểm danh');
+    });
+  });
+
+  describe('getAttendanceSessionStatusMeta', () => {
+    it('returns proper metadata for attendance session statuses', () => {
+      expect(getAttendanceSessionStatusMeta('OPEN').label).toBe('Đang mở');
+      expect(getAttendanceSessionStatusMeta('DRAFT').label).toBe('Bản nháp');
+      expect(getAttendanceSessionStatusMeta('CLOSED').label).toBe('Đã chốt');
+    });
+  });
+
+  describe('getCorrectionRequestStatusMeta', () => {
+    it('returns proper metadata for correction request statuses', () => {
+      expect(getCorrectionRequestStatusMeta('PENDING').label).toBe('Chờ xử lý');
+      expect(getCorrectionRequestStatusMeta('APPROVED').label).toBe('Đã chấp nhận');
+      expect(getCorrectionRequestStatusMeta('REJECTED').label).toBe('Đã từ chối');
     });
   });
 });

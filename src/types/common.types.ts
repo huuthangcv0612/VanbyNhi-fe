@@ -6,7 +6,17 @@ export type MemberStatus = 'PENDING' | 'ACTIVE' | 'REJECTED' | 'LEFT' | 'REMOVED
 
 export type SessionStatus = 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
 
-export type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'LATE';
+export type AttendanceStatus =
+  | 'PRESENT'
+  | 'LATE'
+  | 'EXCUSED_ABSENT'
+  | 'UNEXCUSED_ABSENT'
+  | 'NOT_MARKED'
+  | 'ABSENT';
+
+export type AttendanceSessionStatus = 'OPEN' | 'DRAFT' | 'CLOSED';
+
+export type CorrectionRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 
 export type MaterialType = 'DOCUMENT' | 'RECORDING' | 'IMAGE' | 'LINK' | 'OTHER';
 
