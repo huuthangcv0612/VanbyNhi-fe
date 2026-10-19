@@ -172,10 +172,51 @@ describe('teacherClassesService', () => {
     expect(res).toEqual(mockRes);
   });
 
+  it('getClassMeet: sends GET /teacher/classes/:classId/meet', async () => {
+    const mockRes = {
+      classId: 'c1',
+      className: 'Lớp 12A',
+      meetSpace: {
+        id: 'space-1',
+        classId: 'c1',
+        meetingUri: 'https://meet.google.com/abc-defg-hij',
+        status: 'READY' as const,
+        retryCount: 0,
+      },
+      defaultMeetUrl: 'https://meet.google.com/abc-defg-hij',
+    };
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ data: mockRes });
+
+    const res = await teacherClassesService.getClassMeet('c1');
+
+    expect(apiClient.get).toHaveBeenCalledWith('/teacher/classes/c1/meet');
+    expect(res).toEqual(mockRes);
+  });
+
+  it('retryClassMeet: sends POST /teacher/classes/:classId/meet/retry', async () => {
+    const mockRes = {
+      message: 'Khởi tạo phòng Google Meet thành công',
+      meetSpace: {
+        id: 'space-1',
+        classId: 'c1',
+        meetingUri: 'https://meet.google.com/abc-defg-hij',
+        status: 'READY' as const,
+        retryCount: 1,
+      },
+    };
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: mockRes });
+
+    const res = await teacherClassesService.retryClassMeet('c1');
+
+    expect(apiClient.post).toHaveBeenCalledWith('/teacher/classes/c1/meet/retry');
+    expect(res).toEqual(mockRes);
+  });
+
   it('startSession: sends POST /teacher/sessions/:sessionId/start', async () => {
     const mockRes = {
       message: 'Bắt đầu buổi học thành công (LIVE)',
-      session: { id: 'sess-1', status: 'IN_PROGRESS' },
+      meetingUri: 'https://meet.google.com/abc-defg-hij',
+      session: { id: 'sess-1', status: 'IN_PROGRESS' as const },
     };
     vi.mocked(apiClient.post).mockResolvedValueOnce({ data: mockRes });
 
@@ -323,6 +364,22 @@ describe('studentClassesService', () => {
     const res = await studentClassesService.getSessionDetail('sess-1');
 
     expect(apiClient.get).toHaveBeenCalledWith('/student/sessions/sess-1');
+    expect(res).toEqual(mockRes);
+  });
+
+  it('getClassMeet: sends GET /student/classes/:classId/meet', async () => {
+    const mockRes = {
+      classId: 'c1',
+      className: 'Lớp 12A',
+      meetingUri: 'https://meet.google.com/abc-defg-hij',
+      status: 'READY',
+      instructions: 'Vui lòng chờ giáo viên duyệt...',
+    };
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ data: mockRes });
+
+    const res = await studentClassesService.getClassMeet('c1');
+
+    expect(apiClient.get).toHaveBeenCalledWith('/student/classes/c1/meet');
     expect(res).toEqual(mockRes);
   });
 

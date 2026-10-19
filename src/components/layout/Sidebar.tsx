@@ -13,6 +13,7 @@ import {
   LogOut,
   User as UserIcon,
   FolderOpen,
+  Video,
 } from 'lucide-react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { getRoleMeta } from '@/utils/formatters';
@@ -58,6 +59,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           { label: 'Điểm danh', to: '/teacher/attendance', icon: <ClipboardCheck className="w-4 h-4" /> },
           { label: 'Chấm bài tập', to: '/teacher/assignments', icon: <FileText className="w-4 h-4" /> },
           { label: 'Thông báo', to: '/teacher/notifications', icon: <Bell className="w-4 h-4" /> },
+          { label: 'Tài khoản Google', to: '/teacher/settings/google', icon: <Video className="w-4 h-4" /> },
         ];
       case 'STUDENT':
       default:

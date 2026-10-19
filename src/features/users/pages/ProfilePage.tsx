@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { User as UserIcon, Mail, Phone, Calendar, Key, CheckCircle2, Shield } from 'lucide-react';
+import { User as UserIcon, Mail, Phone, Calendar, Key, CheckCircle2, Shield, Smartphone, Bell, Info } from 'lucide-react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { authService } from '@/features/auth/services/auth.service';
 import { ZaloIcon } from '@/features/auth/components/ZaloIcon';
@@ -15,6 +15,10 @@ import { Badge } from '@/components/ui/badge';
 import { getRoleMeta, formatDate } from '@/utils/formatters';
 import { getApiErrorMessage } from '@/lib/api-client';
 import { useToast } from '@/hooks/useToast';
+import { GoogleAccountCard } from '@/features/google/components/GoogleAccountCard';
+import { PWAInstallButton } from '@/components/pwa/PWAInstallButton';
+import { usePWA } from '@/hooks/usePWA';
+import { usePushNotification } from '@/features/notifications/hooks/usePushNotification';
 
 const profileSchema = z.object({
   fullName: z.string().min(2, 'Họ tên phải có ít nhất 2 ký tự'),
@@ -43,6 +47,14 @@ export function ProfilePage() {
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isUnlinkingZalo, setIsUnlinkingZalo] = useState(false);
+
+  const { isStandalone, isInstalled } = usePWA();
+  const {
+    isSupported: isPushSupported,
+    permission: pushPermission,
+    requestPermission: requestPushPermission,
+    isRequesting: isPushRequesting,
+  } = usePushNotification();
 
   const roleMeta = user ? getRoleMeta(user.role) : null;
 
@@ -328,6 +340,106 @@ export function ProfilePage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Cài đặt Ứng dụng & Thiết bị (PWA) */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Smartphone className="w-5 h-5 text-amber-600" />
+                Ứng dụng & Thiết bị (PWA)
+              </CardTitle>
+              <CardDescription>
+                Trải nghiệm ứng dụng di động VanbyNhi và thông báo trên thiết bị
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200 bg-slate-50/60">
+                <div className="space-y-0.5">
+                  <p className="text-sm font-medium text-slate-800">
+                    Trạng thái cài đặt ứng dụng
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    {isStandalone
+                      ? 'Đang hoạt động ở chế độ ứng dụng độc lập (Standalone)'
+                      : isInstalled
+                        ? 'Ứng dụng đã được cài đặt trên thiết bị'
+                        : 'Mở ứng dụng nhanh từ màn hình chính điện thoại hoặc máy tính'}
+                  </p>
+                </div>
+                <div>
+                  <PWAInstallButton
+                    variant="primary"
+                    size="sm"
+                    showWhenInstalled={true}
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200 bg-slate-50/60">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium text-slate-800">
+                      Thông báo trên thiết bị
+                    </p>
+                    <Badge
+                      variant={
+                        pushPermission === 'granted'
+                          ? 'success'
+                          : pushPermission === 'denied'
+                            ? 'danger'
+                            : 'default'
+                      }
+                      size="sm"
+                    >
+                      {pushPermission === 'granted'
+                        ? 'Đã bật'
+                        : pushPermission === 'denied'
+                          ? 'Đã chặn'
+                          : pushPermission === 'unsupported'
+                            ? 'Không hỗ trợ'
+                            : 'Chưa cấp quyền'}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    Quyền hiển thị thông báo đẩy từ trình duyệt trên thiết bị này
+                  </p>
+                </div>
+                <div>
+                  {isPushSupported && pushPermission !== 'granted' && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        const res = await requestPushPermission();
+                        if (res === 'granted') {
+                          success('Đã cấp quyền thông báo trên thiết bị thành công.', 'Thành công');
+                        } else if (res === 'denied') {
+                          error('Bạn đã từ chối quyền thông báo trên trình duyệt.', 'Thông báo');
+                        }
+                      }}
+                      isLoading={isPushRequesting}
+                      leftIcon={<Bell className="w-3.5 h-3.5" />}
+                    >
+                      Cấp quyền
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-start gap-2 p-2.5 rounded-lg bg-amber-50/50 border border-amber-200/60 text-amber-900 text-[11px]">
+                <Info className="w-4 h-4 shrink-0 text-amber-600 mt-0.5" />
+                <p>
+                  Hệ thống thông báo đẩy tự động (Web Push Notification) qua máy chủ backend đang được chuẩn bị ở Giai đoạn 2.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Google Workspace Account for Teacher & Admin */}
+          {(user?.role === 'TEACHER' || user?.role === 'ADMIN') && (
+            <GoogleAccountCard />
+          )}
         </div>
       </div>
     </div>

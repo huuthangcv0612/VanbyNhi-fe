@@ -70,11 +70,34 @@ export function TeacherClassesListPage() {
   const createMutation = useMutation({
     mutationFn: (payload: TeacherCreateClassDto) => teacherClassesService.createClass(payload),
     onSuccess: (res) => {
-      showToast({
-        type: 'success',
-        title: 'Tạo lớp thành công',
-        message: `Lớp "${res.class.name}" đã được tạo với mã tham gia: ${res.class.joinCode}`,
-      });
+      const meetStatus = res.class?.meetSpace?.status;
+      if (meetStatus === 'READY') {
+        showToast({
+          type: 'success',
+          title: 'Tạo lớp thành công',
+          message: `Lớp "${res.class.name}" đã được tạo thành công cùng phòng Google Meet sẵn sàng. Mã tham gia: ${res.class.joinCode}`,
+        });
+      } else if (meetStatus === 'FAILED') {
+        showToast({
+          type: 'warning',
+          title: 'Lớp học đã được tạo',
+          message:
+            res.class.meetSpace?.errorMessage ||
+            `Lớp "${res.class.name}" đã được tạo nhưng chưa thể tạo phòng Google Meet. Vui lòng bấm thử lại trong trang chi tiết lớp.`,
+        });
+      } else if (meetStatus === 'PENDING') {
+        showToast({
+          type: 'info',
+          title: 'Lớp học đã được tạo',
+          message: `Lớp "${res.class.name}" đã được tạo. Phòng Google Meet đang được khởi tạo.`,
+        });
+      } else {
+        showToast({
+          type: 'success',
+          title: 'Tạo lớp thành công',
+          message: `Lớp "${res.class.name}" đã được tạo với mã tham gia: ${res.class.joinCode}`,
+        });
+      }
       queryClient.invalidateQueries({ queryKey: ['teacher-classes'] });
     },
     onError: (err) => {

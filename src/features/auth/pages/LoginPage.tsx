@@ -3,6 +3,7 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { BookOpen, GraduationCap, Sparkles } from 'lucide-react';
 import { LoginForm } from '../components/LoginForm';
 import { useAuth } from '../hooks/useAuth';
+import { PWAInstallButton } from '@/components/pwa/PWAInstallButton';
 
 export function LoginPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -82,6 +83,10 @@ export function LoginPage() {
               Tài khoản được phân quyền tự động theo vai trò: Quản trị viên (ADMIN), Giáo viên (TEACHER) và Học sinh (STUDENT).
             </p>
           </div>
+        </div>
+
+        <div className="mt-4 flex justify-center">
+          <PWAInstallButton variant="secondary" className="bg-white/80 hover:bg-white text-slate-700 border-slate-200/80 shadow-xs" />
         </div>
 
         <div className="mt-6 text-center text-xs text-slate-400 flex items-center justify-center gap-1">

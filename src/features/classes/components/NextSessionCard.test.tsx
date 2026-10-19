@@ -25,8 +25,10 @@ describe('NextSessionCard', () => {
     vi.clearAllMocks();
     vi.spyOn(meetJoinHook, 'useStudentMeetJoin').mockReturnValue({
       joinMeet: mockJoinMeet,
+      joinClassMeet: vi.fn(),
       isJoining: false,
       joiningSessionId: null,
+      joiningClassId: null,
       popupBlockedUrl: null,
       clearBlockedUrl: vi.fn(),
     });

@@ -34,6 +34,12 @@ import type {
   TeacherMeetAccessResponse,
   TeacherLessonRecord,
   UpsertLessonRecordDto,
+  TeacherCreateClassResponse,
+  TeacherClassMeetResponse,
+  RetryClassMeetResponse,
+  StudentClassMeetResponse,
+  TeacherStartSessionResponse,
+  TeacherEndSessionResponse,
 } from '../types/class.types';
 import type { ClassStatus } from '@/types/common.types';
 
@@ -45,10 +51,32 @@ export const teacherClassesService = {
    * Tạo lớp học mới
    * POST /teacher/classes
    */
-  async createClass(payload: TeacherCreateClassDto): Promise<{ message: string; class: ClassItem }> {
-    const response = await apiClient.post<{ message: string; class: ClassItem }>(
+  async createClass(payload: TeacherCreateClassDto): Promise<TeacherCreateClassResponse> {
+    const response = await apiClient.post<TeacherCreateClassResponse>(
       '/teacher/classes',
       payload,
+    );
+    return response.data;
+  },
+
+  /**
+   * Lấy thông tin phòng Google Meet của lớp học
+   * GET /teacher/classes/:classId/meet
+   */
+  async getClassMeet(classId: string): Promise<TeacherClassMeetResponse> {
+    const response = await apiClient.get<TeacherClassMeetResponse>(
+      `/teacher/classes/${classId}/meet`,
+    );
+    return response.data;
+  },
+
+  /**
+   * Thử lại khởi tạo phòng Google Meet khi lớp chưa có phòng READY
+   * POST /teacher/classes/:classId/meet/retry
+   */
+  async retryClassMeet(classId: string): Promise<RetryClassMeetResponse> {
+    const response = await apiClient.post<RetryClassMeetResponse>(
+      `/teacher/classes/${classId}/meet/retry`,
     );
     return response.data;
   },
@@ -219,8 +247,8 @@ export const teacherClassesService = {
    */
   async startSession(
     sessionId: string,
-  ): Promise<{ message: string; session: TeacherClassSessionItem }> {
-    const response = await apiClient.post<{ message: string; session: TeacherClassSessionItem }>(
+  ): Promise<TeacherStartSessionResponse> {
+    const response = await apiClient.post<TeacherStartSessionResponse>(
       `/teacher/sessions/${sessionId}/start`,
     );
     return response.data;
@@ -232,8 +260,8 @@ export const teacherClassesService = {
    */
   async endSession(
     sessionId: string,
-  ): Promise<{ message: string; session: TeacherClassSessionItem }> {
-    const response = await apiClient.post<{ message: string; session: TeacherClassSessionItem }>(
+  ): Promise<TeacherEndSessionResponse> {
+    const response = await apiClient.post<TeacherEndSessionResponse>(
       `/teacher/sessions/${sessionId}/end`,
     );
     return response.data;
@@ -359,6 +387,17 @@ export const studentClassesService = {
   async getSessionDetail(sessionId: string): Promise<StudentSessionDetail> {
     const response = await apiClient.get<StudentSessionDetail>(
       `/student/sessions/${sessionId}`,
+    );
+    return response.data;
+  },
+
+  /**
+   * Lấy link Google Meet của lớp học mà học sinh đã tham gia (ACTIVE)
+   * GET /student/classes/:classId/meet
+   */
+  async getClassMeet(classId: string): Promise<StudentClassMeetResponse> {
+    const response = await apiClient.get<StudentClassMeetResponse>(
+      `/student/classes/${classId}/meet`,
     );
     return response.data;
   },

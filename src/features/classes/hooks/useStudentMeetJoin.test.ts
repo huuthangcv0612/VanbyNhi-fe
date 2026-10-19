@@ -7,6 +7,7 @@ import * as toastHook from '@/hooks/useToast';
 vi.mock('../services/classes.service', () => ({
   studentClassesService: {
     getMeetJoinUrl: vi.fn(),
+    getClassMeet: vi.fn(),
   },
 }));
 
@@ -126,6 +127,38 @@ describe('useStudentMeetJoin', () => {
       expect.objectContaining({
         type: 'info',
         title: 'Cửa sổ mới bị chặn',
+      }),
+    );
+  });
+
+  it('joinClassMeet: opens newTab and redirects location to class meetingUri', async () => {
+    const mockWindowLocation = { href: '' };
+    const mockNewTab = { location: mockWindowLocation, closed: false, close: vi.fn() } as unknown as Window;
+    const windowOpenSpy = vi.spyOn(window, 'open').mockReturnValue(mockNewTab);
+
+    vi.mocked(studentClassesService.getClassMeet).mockResolvedValueOnce({
+      classId: 'c1',
+      className: 'Lớp 12A',
+      meetingUri: 'https://meet.google.com/class-meet-url',
+      status: 'READY',
+      instructions: 'Vui lòng chờ giáo viên duyệt...',
+    });
+
+    const { result } = renderHook(() => useStudentMeetJoin());
+
+    await act(async () => {
+      await result.current.joinClassMeet('c1');
+    });
+
+    expect(windowOpenSpy).toHaveBeenCalledWith('about:blank', '_blank');
+    expect(studentClassesService.getClassMeet).toHaveBeenCalledWith('c1');
+    expect(mockNewTab.location.href).toBe('https://meet.google.com/class-meet-url');
+    expect(mockNewTab.close).not.toHaveBeenCalled();
+    expect(mockShowToast).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'info',
+        title: 'Lưu ý khi tham gia',
+        message: 'Vui lòng chờ giáo viên duyệt...',
       }),
     );
   });

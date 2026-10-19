@@ -1,8 +1,12 @@
 import { useState, type FormEvent } from 'react';
+import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { AlertTriangle, ExternalLink } from 'lucide-react';
 import { Modal } from '@/components/ui/modal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { getApiErrorMessage } from '@/lib/api-client';
+import { googleService } from '@/features/google/services/google.service';
 import type { ClassItem, TeacherCreateClassDto, TeacherUpdateClassDto } from '../types/class.types';
 
 export interface ClassFormModalProps {
@@ -44,6 +48,14 @@ function ClassFormInner({
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [apiError, setApiError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Kiểm tra trạng thái Google connection khi tạo lớp mới
+  const { data: googleConnection } = useQuery({
+    queryKey: ['google-connection'],
+    queryFn: () => googleService.getConnectionStatus(),
+    enabled: !isEdit,
+  });
 
   const validate = (): boolean => {
     const errs: Record<string, string> = {};
@@ -89,10 +101,12 @@ function ClassFormInner({
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (isSubmitting || isLoading) return;
     setApiError(null);
 
     if (!validate()) return;
 
+    setIsSubmitting(true);
     try {
       const payload: TeacherCreateClassDto | TeacherUpdateClassDto = {
         name: name.trim(),
@@ -106,14 +120,58 @@ function ClassFormInner({
       onClose();
     } catch (err: unknown) {
       setApiError(getApiErrorMessage(err));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
+  const isGoogleMissing =
+    !isEdit && googleConnection && googleConnection.status !== 'CONNECTED';
+
   return (
     <form id="class-form" onSubmit={handleSubmit} className="space-y-4">
+      {/* Banner cảnh báo chưa liên kết Google Workspace */}
+      {isGoogleMissing && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-3.5 space-y-2">
+          <div className="flex items-start gap-2.5">
+            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+            <div className="space-y-0.5 text-xs text-amber-900">
+              <p className="font-semibold">
+                Bạn chưa liên kết tài khoản Google Workspace
+              </p>
+              <p className="text-amber-800 text-[11px] leading-relaxed">
+                Hệ thống yêu cầu giáo viên liên kết tài khoản Google Workspace trước khi tạo lớp để tự động khởi tạo phòng học Google Meet độc quyền cho lớp học.
+              </p>
+            </div>
+          </div>
+          <div className="flex justify-end pt-0.5">
+            <Link
+              to="/teacher/settings/google"
+              onClick={onClose}
+              className="inline-flex items-center gap-1 text-xs font-bold text-amber-900 hover:text-amber-700 underline"
+            >
+              <span>Đi đến trang liên kết Google Workspace</span>
+              <ExternalLink className="w-3 h-3" />
+            </Link>
+          </div>
+        </div>
+      )}
+
       {apiError && (
-        <div className="rounded-xl bg-rose-50 p-3 text-sm text-rose-700 border border-rose-200">
-          {apiError}
+        <div className="rounded-xl bg-rose-50 p-3.5 text-xs text-rose-700 border border-rose-200 space-y-1.5">
+          <p className="font-medium">{apiError}</p>
+          {apiError.toLowerCase().includes('google') && (
+            <div className="pt-1">
+              <Link
+                to="/teacher/settings/google"
+                onClick={onClose}
+                className="inline-flex items-center gap-1 font-bold text-rose-900 hover:underline"
+              >
+                <span>Cài đặt liên kết tài khoản Google ngay</span>
+                <ExternalLink className="w-3 h-3" />
+              </Link>
+            </div>
+          )}
         </div>
       )}
 
@@ -130,6 +188,7 @@ function ClassFormInner({
           placeholder="Ví dụ: Văn học 12 - Luyện thi THPT Quốc gia"
           error={errors.name}
           maxLength={255}
+          disabled={isLoading || isSubmitting}
         />
       </div>
 
@@ -220,13 +279,14 @@ function ClassFormInner({
           type="button"
           variant="outline"
           onClick={onClose}
-          disabled={isLoading}
+          disabled={isLoading || isSubmitting}
         >
           Hủy
         </Button>
         <Button
           type="submit"
-          isLoading={isLoading}
+          isLoading={isLoading || isSubmitting}
+          disabled={isLoading || isSubmitting}
         >
           {isEdit ? 'Lưu thay đổi' : 'Tạo lớp học'}
         </Button>

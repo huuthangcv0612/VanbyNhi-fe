@@ -11,6 +11,10 @@ import {
   CheckCircle2,
   CalendarDays,
   User as UserIcon,
+  Video,
+  ExternalLink,
+  AlertCircle,
+  FileText,
 } from 'lucide-react';
 import { studentClassesService } from '../services/classes.service';
 import { Button } from '@/components/ui/button';
@@ -20,11 +24,11 @@ import { ErrorState } from '@/components/feedback/ErrorState';
 import { getClassStatusMeta, formatDate } from '@/utils/formatters';
 import { getApiErrorMessage } from '@/lib/api-client';
 import { useToast } from '@/hooks/useToast';
+import { useStudentMeetJoin } from '../hooks/useStudentMeetJoin';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { NextSessionCard } from '../components/NextSessionCard';
 import { ClassSessionsList } from '../components/ClassSessionsList';
 import { StudentClassMaterialsTab } from '../components/StudentClassMaterialsTab';
-import { FileText } from 'lucide-react';
 
 export function StudentClassDetailPage() {
   const { classId } = useParams<{ classId: string }>();
@@ -34,6 +38,8 @@ export function StudentClassDetailPage() {
 
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'sessions' | 'materials'>('sessions');
+
+  const { joinClassMeet, isJoining, popupBlockedUrl, clearBlockedUrl } = useStudentMeetJoin();
 
   const {
     data: classData,
@@ -137,6 +143,25 @@ export function StudentClassDetailPage() {
           Rời lớp học
         </Button>
       </div>
+
+      {/* Popup blocked helper banner */}
+      {popupBlockedUrl && (
+        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 text-amber-900 text-xs flex items-center justify-between gap-3 shadow-xs">
+          <span className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+            Trình duyệt đã chặn tab mới. Vui lòng bấm vào liên kết để vào phòng Google Meet.
+          </span>
+          <a
+            href={popupBlockedUrl}
+            target="_blank"
+            rel="noreferrer"
+            onClick={clearBlockedUrl}
+            className="font-bold underline text-amber-950 hover:text-amber-800 cursor-pointer"
+          >
+            Mở Google Meet ngay &rarr;
+          </a>
+        </div>
+      )}
 
       {/* Attendance Summary Stat Row - Real Data from Backend */}
       {attendance && (
@@ -269,6 +294,37 @@ export function StudentClassDetailPage() {
                   <span className="font-mono">{classData.teacher.phone}</span>
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* Card Google Meet của lớp học */}
+          <div className="rounded-2xl border border-violet-200/90 bg-gradient-to-br from-violet-50/70 via-stone-50/40 to-amber-50/30 p-5 shadow-xs space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-violet-900 flex items-center gap-1.5">
+                <Video className="w-4 h-4 text-violet-700" />
+                Phòng học trực tuyến
+              </h3>
+              <Badge size="sm" className="bg-violet-100 text-violet-800 border-violet-200">
+                Google Meet
+              </Badge>
+            </div>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Bạn có thể tham gia vào phòng học Google Meet chính thức của lớp học này.
+            </p>
+            <div className="pt-1">
+              <Button
+                type="button"
+                size="sm"
+                variant="primary"
+                onClick={() => joinClassMeet(classData.id)}
+                isLoading={isJoining}
+                disabled={isJoining}
+                className="w-full bg-violet-700 hover:bg-violet-800 text-white text-xs font-semibold cursor-pointer shadow-xs justify-center"
+                leftIcon={<Video className="w-4 h-4" />}
+                rightIcon={<ExternalLink className="w-3.5 h-3.5" />}
+              >
+                Tham gia Google Meet của lớp
+              </Button>
             </div>
           </div>
 

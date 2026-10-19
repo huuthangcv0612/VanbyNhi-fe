@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="amberGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#d97706" />
+      <stop offset="50%" stop-color="#b45309" />
+      <stop offset="100%" stop-color="#78350f" />
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef3c7" />
+      <stop offset="100%" stop-color="#fde68a" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#451a03" flood-opacity="0.35" />
+    </filter>
+  </defs>
+
+  <!-- Background rounded rectangle for "any" icon -->
+  <rect width="512" height="512" rx="112" fill="url(#amberGrad)" />
+  
+  <!-- Subtle inner border highlight -->
+  <rect x="8" y="8" width="496" height="496" rx="104" fill="none" stroke="#fbbf24" stroke-opacity="0.3" stroke-width="4" />
+
+  <!-- Center Emblem (VanbyNhi Brand: Serif 'V' + Open Book) -->
+  <g filter="url(#shadow)">
+    <!-- Open Book Base Emblem -->
+    <path d="M136 348 C180 332, 220 336, 256 356 C292 336, 332 332, 376 348 C376 358, 372 368, 364 372 C324 356, 288 360, 256 378 C224 360, 188 356, 148 372 C140 368, 136 358, 136 348 Z" fill="#fde68a" fill-opacity="0.9" />
+
+    <!-- Stylized Serif 'V' for VanbyNhi -->
+    <path d="M156 148 L220 148 C226 148, 230 152, 230 158 C230 164, 226 168, 220 168 L202 168 L238 296 L276 168 L258 168 C252 168, 248 164, 248 158 C248 152, 252 148, 258 148 L354 148 C360 148, 364 152, 364 158 C364 164, 360 168, 354 168 L334 168 L274 340 C270 350, 258 358, 246 358 C234 358, 222 350, 218 340 L138 168 L122 168 C116 168, 112 164, 112 158 C112 152, 116 148, 122 148 L156 148 Z" fill="url(#goldGrad)" />
+    
+    <!-- Quill / Sparkle Accent -->
+    <circle cx="340" cy="180" r="10" fill="#fef08a" />
+    <path d="M340 152 Q342 176 366 180 Q342 184 340 208 Q338 184 314 180 Q338 176 340 152 Z" fill="#fef3c7" />
+  </g>
+</svg>

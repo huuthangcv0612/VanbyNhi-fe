@@ -22,6 +22,7 @@ import { TeacherMeetModal } from './TeacherMeetModal';
 import { useToast } from '@/hooks/useToast';
 import { getApiErrorMessage } from '@/lib/api-client';
 import { formatDate, formatTime } from '@/utils/formatters';
+import { isValidMeetUrl } from '@/utils/url.utils';
 import { teacherClassesService } from '@/features/classes/services/classes.service';
 import type { SessionStatus } from '@/types/common.types';
 
@@ -72,23 +73,60 @@ export function TeacherSessionHeader({
   // Mutation: Bắt đầu buổi học (IN_PROGRESS)
   const startSessionMutation = useMutation({
     mutationFn: () => teacherClassesService.startSession(sessionId),
-    onSuccess: (res) => {
-      showToast({
-        type: 'success',
-        title: 'Buổi học đã bắt đầu',
-        message: res.message || 'Trạng thái buổi học đã chuyển sang Đang diễn ra (LIVE)',
-      });
-      setIsStartModalOpen(false);
+    onSuccess: () => {
       invalidateSessionData();
     },
-    onError: (err) => {
+  });
+
+  // Xử lý bắt đầu buổi học và mở link Meet trong tab mới an toàn
+  const handleStartSession = async () => {
+    // 1. Mở trước tab mới đồng bộ theo thao tác click để tránh popup blocker
+    let newTab: Window | null = null;
+    try {
+      newTab = window.open('about:blank', '_blank');
+    } catch {
+      // Browser prevented popup opening
+    }
+
+    try {
+      const res = await startSessionMutation.mutateAsync();
+      setIsStartModalOpen(false);
+
+      if (res.meetingUri && isValidMeetUrl(res.meetingUri)) {
+        if (newTab && !newTab.closed) {
+          newTab.location.href = res.meetingUri;
+        } else {
+          window.open(res.meetingUri, '_blank');
+        }
+        showToast({
+          type: 'success',
+          title: 'Buổi học đã bắt đầu (LIVE)',
+          message:
+            'Đang mở phòng Google Meet trong tab mới. Trang VanbyNhi vẫn được giữ nguyên để bạn điểm danh và dạy học.',
+        });
+      } else {
+        if (newTab && !newTab.closed) {
+          newTab.close();
+        }
+        showToast({
+          type: 'info',
+          title: 'Buổi học đã bắt đầu (LIVE)',
+          message:
+            res.message ||
+            'Trạng thái buổi học đã chuyển sang Đang diễn ra nhưng chưa có đường dẫn Google Meet.',
+        });
+      }
+    } catch (err) {
+      if (newTab && !newTab.closed) {
+        newTab.close();
+      }
       showToast({
         type: 'error',
         title: 'Không thể bắt đầu buổi học',
         message: getApiErrorMessage(err),
       });
-    },
-  });
+    }
+  };
 
   // Mutation: Kết thúc buổi học (COMPLETED)
   const endSessionMutation = useMutation({
@@ -97,7 +135,7 @@ export function TeacherSessionHeader({
       showToast({
         type: 'success',
         title: 'Buổi học đã kết thúc',
-        message: res.message || 'Trạng thái buổi học đã chuyển sang Đã hoàn thành',
+        message: res.message || 'Trạng thái buổi học đã chuyển sang Đã hoàn thành (COMPLETED)',
       });
       setIsEndModalOpen(false);
       invalidateSessionData();
@@ -116,7 +154,12 @@ export function TeacherSessionHeader({
     if (isJoiningMeet) return;
 
     // 1. Mở cửa sổ chờ đồng bộ từ thao tác click của người dùng
-    const newTab = window.open('about:blank', '_blank');
+    let newTab: Window | null = null;
+    try {
+      newTab = window.open('about:blank', '_blank');
+    } catch {
+      // Pop-up prevented
+    }
 
     setIsJoiningMeet(true);
 
@@ -124,9 +167,9 @@ export function TeacherSessionHeader({
       // 2. Gọi API xác thực link Meet chính thức từ Backend
       const meetAccess = await teacherClassesService.getTeacherMeetAccess(sessionId);
 
-      if (meetAccess.hasValidMeetUrl && meetAccess.effectiveMeetUrl) {
+      if (meetAccess.effectiveMeetUrl && isValidMeetUrl(meetAccess.effectiveMeetUrl)) {
         // 3. Link hợp lệ -> điều hướng tab chờ sang Google Meet
-        if (newTab) {
+        if (newTab && !newTab.closed) {
           newTab.location.href = meetAccess.effectiveMeetUrl;
         } else {
           window.open(meetAccess.effectiveMeetUrl, '_blank');
@@ -144,7 +187,7 @@ export function TeacherSessionHeader({
         showToast({
           type: 'warning',
           title: 'Chưa có đường dẫn Google Meet hợp lệ',
-          message: 'Vui lòng cung cấp link Google Meet cho buổi học này.',
+          message: 'Vui lòng cung cấp link Google Meet hợp lệ (https://meet.google.com/...) cho buổi học này.',
         });
         setIsMeetModalOpen(true);
       }
@@ -391,7 +434,7 @@ export function TeacherSessionHeader({
       <ConfirmModal
         isOpen={isStartModalOpen}
         onClose={() => setIsStartModalOpen(false)}
-        onConfirm={() => startSessionMutation.mutate()}
+        onConfirm={handleStartSession}
         title="Bắt đầu buổi học trực tuyến"
         description={
           <div className="space-y-2 text-sm text-slate-600">

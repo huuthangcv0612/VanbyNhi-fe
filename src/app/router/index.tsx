@@ -127,6 +127,11 @@ const StudentDocumentsPage = lazy(() =>
     default: m.StudentDocumentsPage,
   })),
 );
+const TeacherGoogleSettingsPage = lazy(() =>
+  import('@/features/google/pages/TeacherGoogleSettingsPage').then((m) => ({
+    default: m.TeacherGoogleSettingsPage,
+  })),
+);
 
 function SuspenseWrapper({ children }: { children: React.ReactNode }) {
   return <Suspense fallback={<LoadingScreen message="Đang tải trang..." />}>{children}</Suspense>;
@@ -382,6 +387,18 @@ const router = createBrowserRouter([
                     <TeacherDocumentsPage />
                   </SuspenseWrapper>
                 ),
+              },
+              {
+                path: 'settings/google',
+                element: (
+                  <SuspenseWrapper>
+                    <TeacherGoogleSettingsPage />
+                  </SuspenseWrapper>
+                ),
+              },
+              {
+                path: 'settings',
+                element: <Navigate to="/teacher/settings/google" replace />,
               },
             ],
           },

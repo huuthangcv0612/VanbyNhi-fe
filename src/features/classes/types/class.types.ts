@@ -17,6 +17,7 @@ export interface ClassItem {
   createdAt: string;
   updatedAt: string;
   teacher?: User;
+  meetSpace?: ClassMeetSpace | null;
   activeStudentCount?: number;
   pendingRequestsCount?: number;
   totalSessionsCount?: number;
@@ -257,4 +258,59 @@ export interface UpsertLessonRecordDto {
   coreKnowledge?: string;
   incompleteContent?: string;
   generalRemarks?: string;
+}
+
+export type MeetSpaceStatus = 'PENDING' | 'READY' | 'FAILED';
+
+export interface ClassMeetSpace {
+  id: string;
+  classId: string;
+  spaceName?: string | null;
+  meetingUri?: string | null;
+  meetingCode?: string | null;
+  status: MeetSpaceStatus;
+  retryCount: number;
+  lastAttemptAt?: string | null;
+  errorMessage?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface TeacherClassMeetResponse {
+  classId: string;
+  className: string;
+  meetSpace: ClassMeetSpace | null;
+  defaultMeetUrl: string | null;
+  teacherEmail?: string | null;
+}
+
+export interface RetryClassMeetResponse {
+  message: string;
+  meetSpace: ClassMeetSpace;
+}
+
+export interface StudentClassMeetResponse {
+  classId: string;
+  className: string;
+  meetingUri: string;
+  status: string;
+  instructions?: string;
+}
+
+export interface TeacherCreateClassResponse {
+  message: string;
+  class: ClassItem & {
+    meetSpace?: ClassMeetSpace | null;
+  };
+}
+
+export interface TeacherStartSessionResponse {
+  message: string;
+  meetingUri?: string | null;
+  session: TeacherClassSessionItem;
+}
+
+export interface TeacherEndSessionResponse {
+  message: string;
+  session: TeacherClassSessionItem;
 }

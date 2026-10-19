@@ -20,7 +20,9 @@ import {
   XCircle,
   Sparkles,
   FolderOpen,
+  AlertCircle,
 } from 'lucide-react';
+import { googleService } from '@/features/google/services/google.service';
 import { teacherClassesService } from '../services/classes.service';
 import type {
   ClassItem,
@@ -139,7 +141,52 @@ export function TeacherClassDetailPage() {
     enabled: Boolean(classId) && activeTab === 'requests',
   });
 
-  // Mutation: Regenerate join code
+  // Query Meet space info: GET /teacher/classes/:classId/meet
+  const { data: classMeetData } = useQuery({
+    queryKey: ['teacher-class-meet', classId],
+    queryFn: () => teacherClassesService.getClassMeet(classId!),
+    enabled: Boolean(classId),
+  });
+
+  // Query Google connection info to show linked email if available
+  const { data: googleConnection } = useQuery({
+    queryKey: ['google-connection'],
+    queryFn: () => googleService.getConnectionStatus(),
+  });
+
+  // Copy Meet Link state
+  const [copiedMeetLink, setCopiedMeetLink] = useState(false);
+  const handleCopyMeetLink = (url: string) => {
+    navigator.clipboard.writeText(url);
+    setCopiedMeetLink(true);
+    showToast({
+      type: 'info',
+      title: 'Đã sao chép liên kết Google Meet',
+      message: 'Đường dẫn phòng học đã được sao chép vào bộ nhớ tạm',
+    });
+    setTimeout(() => setCopiedMeetLink(false), 2000);
+  };
+
+  // Mutation: Retry create Google Meet space
+  const retryMeetMutation = useMutation({
+    mutationFn: () => teacherClassesService.retryClassMeet(classId!),
+    onSuccess: (res) => {
+      showToast({
+        type: 'success',
+        title: 'Khởi tạo phòng Meet thành công',
+        message: res.message || 'Phòng Google Meet đã sẵn sàng.',
+      });
+      queryClient.invalidateQueries({ queryKey: ['teacher-class-meet', classId] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-class-detail', classId] });
+    },
+    onError: (err) => {
+      showToast({
+        type: 'error',
+        title: 'Không thể tạo phòng Google Meet',
+        message: getApiErrorMessage(err),
+      });
+    },
+  });
   const regenerateCodeMutation = useMutation({
     mutationFn: () => teacherClassesService.regenerateJoinCode(classId!),
     onSuccess: (res) => {
@@ -951,44 +998,180 @@ export function TeacherClassDetailPage() {
             </div>
           </div>
 
+          {/* Card Quản lý Phòng Google Meet của lớp */}
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
-            <h3 className="text-base font-bold text-slate-900">Phòng học trực tuyến</h3>
-            {classData.defaultMeetUrl ? (
-              <div className="space-y-3">
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 truncate">
-                    <Video className="w-5 h-5 text-emerald-600 shrink-0" />
-                    <span className="text-sm font-mono text-slate-800 truncate">
-                      {classData.defaultMeetUrl}
-                    </span>
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex items-center gap-2">
+                <Video className="w-5 h-5 text-emerald-600 shrink-0" />
+                <h3 className="text-base font-bold text-slate-900">Phòng học Google Meet</h3>
+              </div>
+              {(() => {
+                const meetStatus = classMeetData?.meetSpace?.status;
+                if (meetStatus === 'READY') {
+                  return (
+                    <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200">
+                      <CheckCircle className="w-3 h-3 mr-1 text-emerald-600" />
+                      Phòng sẵn sàng (READY)
+                    </Badge>
+                  );
+                }
+                if (meetStatus === 'PENDING') {
+                  return (
+                    <Badge className="bg-amber-100 text-amber-800 border-amber-200">
+                      <RefreshCw className="w-3 h-3 mr-1 text-amber-600 animate-spin" />
+                      Đang xử lý (PENDING)
+                    </Badge>
+                  );
+                }
+                if (meetStatus === 'FAILED') {
+                  return (
+                    <Badge className="bg-rose-100 text-rose-800 border-rose-200">
+                      <XCircle className="w-3 h-3 mr-1 text-rose-600" />
+                      Khởi tạo thất bại (FAILED)
+                    </Badge>
+                  );
+                }
+                if (classData.defaultMeetUrl) {
+                  return (
+                    <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200">
+                      Có link mặc định
+                    </Badge>
+                  );
+                }
+                return (
+                  <Badge className="bg-slate-100 text-slate-700 border-slate-200">
+                    Chưa tạo phòng
+                  </Badge>
+                );
+              })()}
+            </div>
+
+            {(() => {
+              const effectiveMeetUrl =
+                classMeetData?.meetSpace?.meetingUri ||
+                classMeetData?.defaultMeetUrl ||
+                classData.defaultMeetUrl;
+              const isReady =
+                classMeetData?.meetSpace?.status === 'READY' ||
+                (!classMeetData?.meetSpace && Boolean(effectiveMeetUrl));
+
+              if (isReady && effectiveMeetUrl) {
+                return (
+                  <div className="space-y-3.5">
+                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                          Đường dẫn phòng Meet
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleCopyMeetLink(effectiveMeetUrl)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-300 bg-white text-xs font-medium text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                          >
+                            {copiedMeetLink ? (
+                              <>
+                                <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                <span className="text-emerald-700 font-semibold">Đã chép</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3.5 h-3.5 text-slate-500" />
+                                <span>Sao chép link</span>
+                              </>
+                            )}
+                          </button>
+                          <a
+                            href={effectiveMeetUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors shrink-0 cursor-pointer shadow-2xs"
+                          >
+                            <span>Vào phòng</span>
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </a>
+                        </div>
+                      </div>
+                      <div className="p-2.5 rounded-lg bg-white border border-slate-200 text-xs font-mono text-slate-800 break-all select-all">
+                        {effectiveMeetUrl}
+                      </div>
+                    </div>
+
+                    {/* Hiển thị email Google đã liên kết nếu có */}
+                    {googleConnection?.email && (
+                      <div className="text-xs text-slate-500 flex items-center justify-between gap-2 px-1">
+                        <span>Tài khoản Google liên kết:</span>
+                        <span className="font-semibold text-slate-800">{googleConnection.email}</span>
+                      </div>
+                    )}
+
+                    <p className="text-xs text-slate-500">
+                      Link Google Meet này được cấp phát cố định cho lớp học và sử dụng cho tất cả các buổi học của lớp.
+                    </p>
                   </div>
-                  <a
-                    href={classData.defaultMeetUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors shrink-0 cursor-pointer"
-                  >
-                    <span>Vào phòng</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
+                );
+              }
+
+              // Trạng thái PENDING hoặc FAILED hoặc Chưa có phòng
+              return (
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                  {classMeetData?.meetSpace?.status === 'FAILED' ? (
+                    <div className="space-y-2 text-xs text-rose-700">
+                      <div className="flex items-start gap-2">
+                        <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-semibold">Khởi tạo phòng Meet thất bại</p>
+                          <p className="text-rose-600 mt-0.5">
+                            {classMeetData.meetSpace.errorMessage ||
+                              'Không thể kết nối với dịch vụ Google Meet của Google Workspace.'}
+                          </p>
+                          {classMeetData.meetSpace.retryCount > 0 && (
+                            <p className="text-[11px] text-slate-400 mt-1">
+                              Số lần đã thử lại: {classMeetData.meetSpace.retryCount}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ) : classMeetData?.meetSpace?.status === 'PENDING' ? (
+                    <div className="space-y-1 text-xs text-amber-800">
+                      <p className="font-semibold flex items-center gap-1.5">
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-600" />
+                        Đang tạo phòng Google Meet...
+                      </p>
+                      <p className="text-[11px] text-amber-700">
+                        Yêu cầu đang được xử lý trên hệ thống. Nếu sau 10 giây chưa hoàn tất, bạn có thể bấm nút thử lại.
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-600">
+                      Lớp học này chưa có phòng Google Meet được kích hoạt.
+                    </p>
+                  )}
+
+                  <div className="pt-2 flex items-center justify-between gap-2 border-t border-slate-200/80 flex-wrap">
+                    <span className="text-[11px] text-slate-400">
+                      {googleConnection?.email
+                        ? `Tài khoản: ${googleConnection.email}`
+                        : 'Yêu cầu tài khoản Google Workspace'}
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      onClick={() => retryMeetMutation.mutate()}
+                      isLoading={retryMeetMutation.isPending}
+                      disabled={retryMeetMutation.isPending}
+                      leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
+                    >
+                      {retryMeetMutation.isPending
+                        ? 'Đang khởi tạo...'
+                        : 'Thử lại tạo phòng Google Meet'}
+                    </Button>
+                  </div>
                 </div>
-                <p className="text-xs text-slate-500">
-                  Link Google Meet mặc định của lớp học được dùng cho các buổi học không thiết lập link riêng.
-                </p>
-              </div>
-            ) : (
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-center space-y-2">
-                <p className="text-sm text-slate-500">Chưa thiết lập link Google Meet mặc định</p>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setIsEditOpen(true)}
-                  className="cursor-pointer"
-                >
-                  Thêm link Meet
-                </Button>
-              </div>
-            )}
+              );
+            })()}
           </div>
         </div>
       )}

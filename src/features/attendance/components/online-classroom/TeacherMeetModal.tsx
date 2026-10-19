@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/useToast';
 import { getApiErrorMessage } from '@/lib/api-client';
+import { isValidMeetUrl } from '@/utils/url.utils';
 import { teacherClassesService } from '@/features/classes/services/classes.service';
 
 interface TeacherMeetModalProps {
@@ -14,8 +15,6 @@ interface TeacherMeetModalProps {
   currentMeetUrl?: string | null;
   onSuccess?: () => void;
 }
-
-const MEET_URL_REGEX = /^https:\/\/meet\.google\.com\/[a-z0-9-]+$/i;
 
 interface TeacherMeetFormProps {
   sessionId: string;
@@ -65,8 +64,8 @@ function TeacherMeetForm({
       return;
     }
 
-    if (!MEET_URL_REGEX.test(trimmed)) {
-      setError('URL phải có định dạng https://meet.google.com/xxx-yyyy-zzz');
+    if (!isValidMeetUrl(trimmed)) {
+      setError('Đường dẫn Google Meet không hợp lệ (yêu cầu https://meet.google.com/...)');
       return;
     }
 
