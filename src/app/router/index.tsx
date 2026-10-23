@@ -102,6 +102,16 @@ const AssignmentsPage = lazy(() =>
     default: m.AssignmentsPage,
   })),
 );
+const TeacherAssignmentDetailPage = lazy(() =>
+  import('@/features/assignments/pages/TeacherAssignmentDetailPage').then((m) => ({
+    default: m.TeacherAssignmentDetailPage,
+  })),
+);
+const StudentAssignmentDetailPage = lazy(() =>
+  import('@/features/assignments/pages/StudentAssignmentDetailPage').then((m) => ({
+    default: m.StudentAssignmentDetailPage,
+  })),
+);
 const NotificationsPage = lazy(() =>
   import('@/features/notifications/pages/NotificationsPage').then((m) => ({
     default: m.NotificationsPage,
@@ -279,6 +289,14 @@ const router = createBrowserRouter([
                 ),
               },
               {
+                path: 'assignments/:assignmentId',
+                element: (
+                  <SuspenseWrapper>
+                    <TeacherAssignmentDetailPage />
+                  </SuspenseWrapper>
+                ),
+              },
+              {
                 path: 'notifications',
                 element: (
                   <SuspenseWrapper>
@@ -369,6 +387,14 @@ const router = createBrowserRouter([
                 element: (
                   <SuspenseWrapper>
                     <AssignmentsPage />
+                  </SuspenseWrapper>
+                ),
+              },
+              {
+                path: 'assignments/:assignmentId',
+                element: (
+                  <SuspenseWrapper>
+                    <TeacherAssignmentDetailPage />
                   </SuspenseWrapper>
                 ),
               },
@@ -471,6 +497,14 @@ const router = createBrowserRouter([
                 element: (
                   <SuspenseWrapper>
                     <AssignmentsPage />
+                  </SuspenseWrapper>
+                ),
+              },
+              {
+                path: 'assignments/:assignmentId',
+                element: (
+                  <SuspenseWrapper>
+                    <StudentAssignmentDetailPage />
                   </SuspenseWrapper>
                 ),
               },

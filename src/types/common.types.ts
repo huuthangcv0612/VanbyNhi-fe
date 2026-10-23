@@ -22,7 +22,7 @@ export type MaterialType = 'DOCUMENT' | 'RECORDING' | 'IMAGE' | 'LINK' | 'OTHER'
 
 export type TuitionStatus = 'UNPAID' | 'PARTIAL' | 'PAID' | 'OVERDUE';
 
-export type AssignmentStatus = 'SUBMITTED' | 'GRADED' | 'RESUBMIT_REQUESTED';
+export type AssignmentStatus = 'SUBMITTED' | 'GRADED' | 'RESUBMIT_REQUESTED' | 'RETURNED';
 
 export type NotificationType = 'TUITION' | 'SESSION' | 'ASSIGNMENT' | 'ATTENDANCE' | 'SYSTEM';
 

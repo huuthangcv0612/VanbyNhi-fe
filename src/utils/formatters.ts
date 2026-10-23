@@ -343,10 +343,20 @@ export function getAssignmentStatusMeta(status: AssignmentStatus): { label: stri
         label: 'Đã chấm điểm',
         badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-200',
       };
+    case 'RETURNED':
+      return {
+        label: 'Đã trả bài',
+        badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+      };
     case 'RESUBMIT_REQUESTED':
       return {
         label: 'Yêu cầu nộp lại',
         badgeClass: 'bg-amber-100 text-amber-800 border-amber-200',
+      };
+    default:
+      return {
+        label: 'Chưa nộp bài',
+        badgeClass: 'bg-slate-100 text-slate-700 border-slate-200',
       };
   }
 }
