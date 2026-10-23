@@ -24,7 +24,7 @@ export function RegisterPage() {
           navigate('/student/dashboard', { replace: true });
           break;
         default:
-          navigate('/', { replace: true });
+          break;
       }
     }
   }, [isAuthenticated, isLoading, user, navigate]);

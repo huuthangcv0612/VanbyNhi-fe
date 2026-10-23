@@ -16,7 +16,14 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
-      includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png'],
+      includeAssets: [
+        'favicon.svg',
+        'apple-touch-icon.png',
+        'pwa-192x192.png',
+        'pwa-512x512.png',
+        'animations/loading.lottie',
+        'wasm/dotlottie-player.wasm',
+      ],
       manifest: {
         name: 'VanbyNhi — Nền tảng Học tập & Quản lý Văn học',
         short_name: 'VanbyNhi',
@@ -57,7 +64,7 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,wasm,lottie}'],
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         skipWaiting: true,
