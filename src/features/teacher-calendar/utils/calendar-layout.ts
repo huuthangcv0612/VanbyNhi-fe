@@ -11,8 +11,8 @@ export interface PositionedWeekEvent {
   endMinutes: number;
 }
 
-export const CALENDAR_START_HOUR = 6; // 06:00
-export const CALENDAR_END_HOUR = 22; // 22:00
+export const CALENDAR_START_HOUR = 0; // 00:00
+export const CALENDAR_END_HOUR = 24; // 24:00 (00:00 ngày tiếp theo)
 export const HOUR_HEIGHT_PX = 64; // Chiều cao mỗi giờ
 
 /**
@@ -63,9 +63,14 @@ export function layoutDayEvents(
     const startMin = getMinutesFromMidnightVN(event.startAt);
     let endMin = getMinutesFromMidnightVN(event.endAt);
 
-    // Xử lý ca dạy kéo dài qua nửa đêm hoặc lỗi dữ liệu
-    if (endMin <= startMin) {
-      endMin = startMin + 45; // Mặc định 45 phút nếu end <= start
+    const startDateKey = formatDateKey(new Date(event.startAt));
+    const endDateKey = formatDateKey(new Date(event.endAt));
+
+    // Xử lý ca dạy kéo dài qua nửa đêm sang ngày hôm sau hoặc kết thúc vào 00:00 hôm sau
+    if (endDateKey !== startDateKey) {
+      endMin = maxMinutes;
+    } else if (endMin <= startMin) {
+      endMin = Math.min(maxMinutes, startMin + 45); // Mặc định 45 phút nếu end <= start
     }
 
     // Giới hạn trong khung giờ hiển thị

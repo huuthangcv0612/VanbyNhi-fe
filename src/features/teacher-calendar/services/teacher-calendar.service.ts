@@ -3,7 +3,9 @@ import type {
   CalendarEvent,
   CalendarLabel,
   CalendarParticipant,
+  ConflictingEvent,
   CreateEventPayload,
+  CreateEventResult,
   CreateLabelPayload,
   QueryCalendarEventsParams,
   StudentOption,
@@ -111,10 +113,10 @@ export const teacherCalendarService = {
   },
 
   /**
-   * Tạo ca dạy mới
+   * Tạo ca dạy mới (hỗ trợ cả ca đơn và chuỗi ca lặp lại theo tuần trong 1 tháng)
    * POST /teacher-calendar/events
    */
-  async createEvent(payload: CreateEventPayload): Promise<CalendarEvent> {
+  async createEvent(payload: CreateEventPayload): Promise<CreateEventResult> {
     const cleanPayload: Record<string, unknown> = {
       title: payload.title,
       startAt: payload.startAt,
@@ -130,14 +132,54 @@ export const teacherCalendarService = {
     if (payload.studentIds !== undefined && payload.studentIds.length > 0)
       cleanPayload.studentIds = payload.studentIds;
 
-    const response = await apiClient.post<CalendarEvent | { event: CalendarEvent }>(
+    // Chỉ gửi recurrence khi giáo viên chọn lặp lại để tương thích tối đa với API cũ
+    if (payload.recurrence && payload.recurrence !== 'NONE') {
+      cleanPayload.recurrence = payload.recurrence;
+    }
+
+    const response = await apiClient.post<unknown>(
       '/teacher-calendar/events',
       cleanPayload,
     );
-    if (response.data && typeof response.data === 'object' && 'event' in response.data) {
-      return (response.data as { event: CalendarEvent }).event;
+
+    const rawData = response.data as Record<string, unknown> | null;
+    const baseEvent = (
+      rawData && typeof rawData === 'object' && 'event' in rawData
+        ? rawData.event
+        : rawData
+    ) as CalendarEvent;
+
+    const eventsList = (
+      rawData && Array.isArray(rawData.events)
+        ? rawData.events
+        : rawData && Array.isArray(rawData.schedules)
+          ? rawData.schedules
+          : undefined
+    ) as CalendarEvent[] | undefined;
+
+    const result: CreateEventResult = {
+      ...baseEvent,
+    };
+
+    if (rawData && 'hasConflict' in rawData) {
+      result.hasConflict = Boolean(rawData.hasConflict);
     }
-    return response.data as CalendarEvent;
+    if (rawData && 'conflicts' in rawData) {
+      result.conflicts = rawData.conflicts as ConflictingEvent[];
+    }
+    if (eventsList !== undefined) {
+      result.events = eventsList;
+    }
+    if (rawData && 'totalOccurrences' in rawData) {
+      result.totalOccurrences = rawData.totalOccurrences as number;
+    } else if (eventsList) {
+      result.totalOccurrences = eventsList.length;
+    }
+    if (rawData && 'message' in rawData) {
+      result.message = rawData.message as string;
+    }
+
+    return result;
   },
 
   /**

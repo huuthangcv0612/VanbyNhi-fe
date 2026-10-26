@@ -145,5 +145,68 @@ describe('teacherCalendarService', () => {
         note: null,
       });
     });
+
+    it('does NOT send recurrence in payload when recurrence is NONE or undefined', async () => {
+      const payload = {
+        title: 'Ca văn 12',
+        startAt: '2026-10-27T15:00:00+07:00',
+        endAt: '2026-10-27T16:30:00+07:00',
+        recurrence: 'NONE' as const,
+      };
+      const created = { id: 'ev-1', title: payload.title, startAt: payload.startAt, endAt: payload.endAt };
+      vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { event: created } });
+
+      await teacherCalendarService.createEvent(payload);
+
+      expect(apiClient.post).toHaveBeenCalledWith('/teacher-calendar/events', {
+        title: 'Ca văn 12',
+        startAt: '2026-10-27T15:00:00+07:00',
+        endAt: '2026-10-27T16:30:00+07:00',
+      });
+    });
+
+    it('sends recurrence WEEKLY_FOR_MONTH and extracts recurring response properly', async () => {
+      const payload = {
+        title: 'Ca văn định kỳ tháng 11',
+        startAt: '2026-10-27T15:00:00+07:00',
+        endAt: '2026-10-27T16:30:00+07:00',
+        recurrence: 'WEEKLY_FOR_MONTH' as const,
+      };
+
+      const mockEvents = [
+        { id: 'ev-1', title: payload.title, startAt: '2026-10-27T15:00:00+07:00', endAt: '2026-10-27T16:30:00+07:00' },
+        { id: 'ev-2', title: payload.title, startAt: '2026-11-03T15:00:00+07:00', endAt: '2026-11-03T16:30:00+07:00' },
+        { id: 'ev-3', title: payload.title, startAt: '2026-11-10T15:00:00+07:00', endAt: '2026-11-10T16:30:00+07:00' },
+        { id: 'ev-4', title: payload.title, startAt: '2026-11-17T15:00:00+07:00', endAt: '2026-11-17T16:30:00+07:00' },
+        { id: 'ev-5', title: payload.title, startAt: '2026-11-24T15:00:00+07:00', endAt: '2026-11-24T16:30:00+07:00' },
+      ];
+
+      vi.mocked(apiClient.post).mockResolvedValueOnce({
+        data: {
+          message: 'Tạo chuỗi ca dạy lặp lại thành công',
+          event: mockEvents[0],
+          events: mockEvents,
+          totalOccurrences: 5,
+          hasConflict: true,
+          conflicts: [{ id: 'conflict-1', title: 'Ca trùng', startAt: '2026-11-03T15:30:00+07:00', endAt: '2026-11-03T16:30:00+07:00' }],
+        },
+      });
+
+      const result = await teacherCalendarService.createEvent(payload);
+
+      expect(apiClient.post).toHaveBeenCalledWith('/teacher-calendar/events', {
+        title: 'Ca văn định kỳ tháng 11',
+        startAt: '2026-10-27T15:00:00+07:00',
+        endAt: '2026-10-27T16:30:00+07:00',
+        recurrence: 'WEEKLY_FOR_MONTH',
+      });
+
+      expect(result.id).toBe('ev-1');
+      expect(result.events).toHaveLength(5);
+      expect(result.totalOccurrences).toBe(5);
+      expect(result.hasConflict).toBe(true);
+      expect(result.conflicts).toHaveLength(1);
+      expect(result.conflicts?.[0].title).toBe('Ca trùng');
+    });
   });
 });

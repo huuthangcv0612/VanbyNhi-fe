@@ -42,17 +42,28 @@ export function useCreateEvent() {
 
   return useMutation({
     mutationFn: (payload: CreateEventPayload) => teacherCalendarService.createEvent(payload),
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: [...TEACHER_CALENDAR_KEYS.all, 'events'] });
       queryClient.invalidateQueries({ queryKey: TEACHER_CALENDAR_KEYS.labels() });
+      queryClient.invalidateQueries({ queryKey: ['student-schedules'] });
+
+      const isRecurring = variables.recurrence === 'WEEKLY_FOR_MONTH';
+      const total = data.totalOccurrences || data.events?.length || 1;
 
       if (data.hasConflict && data.conflicts && data.conflicts.length > 0) {
         toast.warning(
-          `Ca dạy đã được tạo, nhưng có ${data.conflicts.length} ca khác trùng giờ!`,
+          isRecurring
+            ? `Đã tạo chuỗi ${total} ca dạy, nhưng có ${data.conflicts.length} ca khác trùng giờ!`
+            : `Ca dạy đã được tạo, nhưng có ${data.conflicts.length} ca khác trùng giờ!`,
           'Cảnh báo xung đột thời gian',
         );
       } else {
-        toast.success('Đã tạo ca giảng dạy thành công!', 'Thành công');
+        toast.success(
+          isRecurring
+            ? `Đã tạo thành công chuỗi ${total} ca giảng dạy (${total} buổi)!`
+            : 'Đã tạo ca giảng dạy thành công!',
+          'Thành công',
+        );
       }
     },
     onError: (error) => {

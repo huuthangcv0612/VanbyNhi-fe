@@ -72,6 +72,8 @@ export interface QueryCalendarEventsParams {
   labelId?: string;
 }
 
+export type ScheduleRecurrence = 'NONE' | 'WEEKLY_FOR_MONTH';
+
 export interface CreateEventPayload {
   title: string;
   startAt: string; // ISO 8601
@@ -83,6 +85,14 @@ export interface CreateEventPayload {
   reminderMinutes?: number;
   note?: string;
   studentIds?: string[];
+  recurrence?: ScheduleRecurrence;
+}
+
+export interface CreateEventResult extends CalendarEvent {
+  message?: string;
+  event?: CalendarEvent;
+  events?: CalendarEvent[];
+  totalOccurrences?: number;
 }
 
 export interface UpdateEventPayload {
