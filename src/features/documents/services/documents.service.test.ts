@@ -6,6 +6,7 @@ vi.mock('@/lib/api-client', () => ({
   apiClient: {
     get: vi.fn(),
     post: vi.fn(),
+    put: vi.fn(),
     patch: vi.fn(),
     delete: vi.fn(),
   },
@@ -379,6 +380,223 @@ describe('studentDocumentsService', () => {
       '/student/materials/mat-1/download-url',
     );
     expect(res).toEqual(mockResponse);
+  });
+
+  // ==================== STRUCTURED DOCUMENTS TESTS ====================
+  it('createDocument calls POST /documents', async () => {
+    const mockCreated = {
+      message: 'Tạo tài liệu thành công',
+      document: {
+        id: 'doc-123',
+        title: 'Giáo án mới',
+        type: 'STRUCTURED_NOTE',
+        revision: 1,
+      },
+    };
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: mockCreated });
+
+    const res = await teacherDocumentsService.createDocument({
+      title: '  Giáo án mới  ',
+      description: 'Mô tả giáo án',
+      status: 'DRAFT',
+    });
+
+    expect(apiClient.post).toHaveBeenCalledWith('/documents', {
+      title: 'Giáo án mới',
+      description: 'Mô tả giáo án',
+      categoryId: undefined,
+      status: 'DRAFT',
+      content: undefined,
+    });
+    expect(res).toEqual(mockCreated);
+  });
+
+  it('getDocument calls GET /documents/:id', async () => {
+    const mockDoc = {
+      id: 'doc-123',
+      title: 'Giáo án Ngữ văn',
+      revision: 3,
+      content: { type: 'doc', content: [] },
+    };
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ data: mockDoc });
+
+    const res = await teacherDocumentsService.getDocument('doc-123');
+
+    expect(apiClient.get).toHaveBeenCalledWith('/documents/doc-123');
+    expect(res).toEqual(mockDoc);
+  });
+
+  it('updateContent calls PUT /documents/:id/content with expectedRevision', async () => {
+    const mockSaveRes = {
+      message: 'Lưu nội dung tài liệu thành công',
+      revision: 4,
+      updatedAt: '2026-10-26T09:15:00.000Z',
+    };
+    vi.mocked(apiClient.put).mockResolvedValueOnce({ data: mockSaveRes });
+
+    const res = await teacherDocumentsService.updateContent('doc-123', {
+      expectedRevision: 3,
+      content: { type: 'doc', content: [{ type: 'paragraph' }] },
+      versionReason: 'Cập nhật đoạn văn',
+    });
+
+    expect(apiClient.put).toHaveBeenCalledWith('/documents/doc-123/content', {
+      expectedRevision: 3,
+      content: { type: 'doc', content: [{ type: 'paragraph' }] },
+      versionReason: 'Cập nhật đoạn văn',
+    });
+    expect(res).toEqual(mockSaveRes);
+  });
+
+  it('getVersions calls GET /documents/:id/versions', async () => {
+    const mockVersions = {
+      items: [
+        {
+          id: 'v-1',
+          documentId: 'doc-123',
+          revision: 1,
+          title: 'Khởi tạo',
+          reason: 'Khởi tạo tài liệu',
+          createdAt: '2026-10-26',
+          actor: { id: 'u-1', fullName: 'Cô Nhị', role: 'TEACHER' },
+        },
+      ],
+      pagination: { total: 1, page: 1, limit: 10, totalPages: 1 },
+    };
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ data: mockVersions });
+
+    const res = await teacherDocumentsService.getVersions('doc-123', { page: 1, limit: 10 });
+
+    expect(apiClient.get).toHaveBeenCalledWith('/documents/doc-123/versions', {
+      params: { page: 1, limit: 10 },
+    });
+    expect(res).toEqual(mockVersions);
+  });
+
+  it('restoreVersion calls POST /documents/:id/restore/:versionId', async () => {
+    const mockRestoreRes = {
+      message: 'Đã khôi phục thành công',
+      revision: 5,
+      document: { id: 'doc-123', revision: 5 },
+    };
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: mockRestoreRes });
+
+    const res = await teacherDocumentsService.restoreVersion('doc-123', 'v-1');
+
+    expect(apiClient.post).toHaveBeenCalledWith('/documents/doc-123/restore/v-1');
+    expect(res).toEqual(mockRestoreRes);
+  });
+
+  it('importDocx calls POST /documents/import', async () => {
+    const mockImportRes = {
+      message: 'Nhập tài liệu từ DOCX thành công',
+      document: { id: 'doc-imported', title: 'Tài liệu DOCX' },
+      warnings: [],
+    };
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: mockImportRes });
+
+    const res = await teacherDocumentsService.importDocx({
+      storageKey: 'keys/sample.docx',
+      title: 'Tài liệu DOCX',
+    });
+
+    expect(apiClient.post).toHaveBeenCalledWith('/documents/import', {
+      storageKey: 'keys/sample.docx',
+      title: 'Tài liệu DOCX',
+    });
+    expect(res).toEqual(mockImportRes);
+  });
+
+  it('importDocxFlow runs initUpload, uploadFileToR2, and importDocx sequentially', async () => {
+    const file = new File(['docx content'], 'bai-hoc.docx', {
+      type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    });
+
+    vi.mocked(apiClient.post).mockImplementation((url) => {
+      if (url === '/teacher/documents/upload-url') {
+        return Promise.resolve({
+          data: {
+            uploadUrl: 'https://r2.storage/upload-url',
+            storageKey: 'docs/bai-hoc.docx',
+            uploadSessionId: 'sess-1',
+            expiresInSeconds: 300,
+            requiredHeaders: { 'x-amz-acl': 'private' },
+          },
+        });
+      }
+      if (url === '/documents/import') {
+        return Promise.resolve({
+          data: {
+            message: 'Nhập thành công',
+            document: { id: 'doc-new', title: 'Bài học Ngữ Văn' },
+            warnings: ['Cảnh báo định dạng'],
+          },
+        });
+      }
+      return Promise.reject(new Error(`Unexpected url: ${url}`));
+    });
+
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+    } as Response);
+
+    const stages: string[] = [];
+    const res = await teacherDocumentsService.importDocxFlow(
+      { file, title: 'Bài học Ngữ Văn' },
+      (stage) => stages.push(stage),
+    );
+
+    expect(stages).toEqual(['init', 'uploading', 'importing']);
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      'https://r2.storage/upload-url',
+      expect.objectContaining({
+        method: 'PUT',
+        body: file,
+        headers: expect.objectContaining({
+          'x-amz-acl': 'private',
+        }),
+      }),
+    );
+    expect(res.document.id).toBe('doc-new');
+    expect(res.warnings).toEqual(['Cảnh báo định dạng']);
+  });
+
+  it('exportDocument calls POST /documents/:id/export', async () => {
+    const mockExportRes = {
+      jobId: 'job-123',
+      status: 'COMPLETED',
+      format: 'PDF',
+      revision: 3,
+      downloadUrl: 'https://r2.storage/export.pdf',
+      expiresInSeconds: 300,
+    };
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: mockExportRes });
+
+    const res = await teacherDocumentsService.exportDocument('doc-123', { format: 'PDF' });
+
+    expect(apiClient.post).toHaveBeenCalledWith('/documents/doc-123/export', {
+      format: 'PDF',
+    });
+    expect(res).toEqual(mockExportRes);
+  });
+
+  it('getExportStatus calls GET /documents/:id/export/:exportId', async () => {
+    const mockStatus = {
+      jobId: 'job-123',
+      status: 'COMPLETED',
+      format: 'PDF',
+      revision: 3,
+      downloadUrl: 'https://r2.storage/export.pdf',
+      expiresInSeconds: 300,
+    };
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ data: mockStatus });
+
+    const res = await teacherDocumentsService.getExportStatus('doc-123', 'job-123');
+
+    expect(apiClient.get).toHaveBeenCalledWith('/documents/doc-123/export/job-123');
+    expect(res).toEqual(mockStatus);
   });
 });
 

@@ -132,6 +132,11 @@ const TeacherDocumentsPage = lazy(() =>
     default: m.TeacherDocumentsPage,
   })),
 );
+const DocumentEditorPage = lazy(() =>
+  import('@/features/documents/pages/DocumentEditorPage').then((m) => ({
+    default: m.DocumentEditorPage,
+  })),
+);
 const StudentDocumentsPage = lazy(() =>
   import('@/features/documents/pages/StudentDocumentsPage').then((m) => ({
     default: m.StudentDocumentsPage,
@@ -312,6 +317,22 @@ const router = createBrowserRouter([
                   </SuspenseWrapper>
                 ),
               },
+              {
+                path: 'documents/new',
+                element: (
+                  <SuspenseWrapper>
+                    <DocumentEditorPage />
+                  </SuspenseWrapper>
+                ),
+              },
+              {
+                path: 'documents/:id/edit',
+                element: (
+                  <SuspenseWrapper>
+                    <DocumentEditorPage />
+                  </SuspenseWrapper>
+                ),
+              },
             ],
           },
         ],
@@ -411,6 +432,22 @@ const router = createBrowserRouter([
                 element: (
                   <SuspenseWrapper>
                     <TeacherDocumentsPage />
+                  </SuspenseWrapper>
+                ),
+              },
+              {
+                path: 'documents/new',
+                element: (
+                  <SuspenseWrapper>
+                    <DocumentEditorPage />
+                  </SuspenseWrapper>
+                ),
+              },
+              {
+                path: 'documents/:id/edit',
+                element: (
+                  <SuspenseWrapper>
+                    <DocumentEditorPage />
                   </SuspenseWrapper>
                 ),
               },

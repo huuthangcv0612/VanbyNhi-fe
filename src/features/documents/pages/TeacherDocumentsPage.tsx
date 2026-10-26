@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   FolderOpen,
-  Plus,
   Search,
   Trash2,
   Pencil,
@@ -17,6 +17,10 @@ import {
   Square,
   X,
   Layers,
+  PenTool,
+  FileText,
+  Download,
+  UploadCloud,
 } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
@@ -50,10 +54,17 @@ import { DocumentPreviewModal } from '../components/DocumentPreviewModal';
 import { ShareDocumentModal } from '../components/ShareDocumentModal';
 import { AssignDocumentsModal } from '../components/AssignDocumentsModal';
 import { TeacherAssignedMaterialsView } from '../components/TeacherAssignedMaterialsView';
+import { DocxImportModal } from '../components/DocxImportModal';
+import { ExportModal } from '../components/editor/ExportModal';
 
 export function TeacherDocumentsPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const { success, error: toastError, info } = useToast();
+
+  const isTeacher = !location.pathname.startsWith('/admin');
+  const editBasePath = isTeacher ? '/teacher/documents' : '/admin/documents';
 
   // Navigation / Selection State
   // selectedCategoryId: null (All), 'UNCLASSIFIED' (Unclassified), or string id
@@ -64,6 +75,8 @@ export function TeacherDocumentsPage() {
 
   // Modals state
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [isDocxImportModalOpen, setIsDocxImportModalOpen] = useState(false);
+  const [docToExport, setDocToExport] = useState<DocumentItem | null>(null);
   const [categoryModalState, setCategoryModalState] = useState<{
     isOpen: boolean;
     categoryToEdit?: DocumentCategoryTreeNode | null;
@@ -285,8 +298,19 @@ export function TeacherDocumentsPage() {
     setIsAssignModalOpen(true);
   };
 
-  const getFileTypeBadge = (mimeType: string, originalName: string) => {
-    const ext = originalName.split('.').pop()?.toUpperCase() || '';
+  const getFileTypeBadge = (
+    mimeType: string,
+    originalName?: string | null,
+    type?: string,
+  ) => {
+    if (type === 'STRUCTURED_NOTE' || mimeType === 'application/vnd.tiptap+json') {
+      return (
+        <span className="text-[10px] font-bold text-amber-900 bg-amber-100 px-2 py-0.5 rounded border border-amber-300 shrink-0">
+          SOẠN THẢO
+        </span>
+      );
+    }
+    const ext = originalName ? originalName.split('.').pop()?.toUpperCase() || '' : '';
     if (mimeType.includes('pdf') || ext === 'PDF') {
       return (
         <span className="text-[10px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200 shrink-0">
@@ -327,6 +351,36 @@ export function TeacherDocumentsPage() {
         {ext || 'FILE'}
       </span>
     );
+  };
+
+  const getStatusBadge = (status?: string) => {
+    if (!status) return null;
+    if (status === 'DRAFT') {
+      return (
+        <Badge variant="default" size="sm" className="text-[10px] px-1.5 py-0">
+          Bản nháp
+        </Badge>
+      );
+    }
+    if (status === 'PUBLISHED') {
+      return (
+        <Badge
+          variant="success"
+          size="sm"
+          className="text-[10px] px-1.5 py-0 bg-emerald-50 text-emerald-800 border-emerald-200"
+        >
+          Đã xuất bản
+        </Badge>
+      );
+    }
+    if (status === 'ARCHIVED') {
+      return (
+        <Badge variant="warning" size="sm" className="text-[10px] px-1.5 py-0">
+          Lưu trữ
+        </Badge>
+      );
+    }
+    return null;
   };
 
   return (
@@ -511,7 +565,7 @@ export function TeacherDocumentsPage() {
             </div>
 
             {/* Search and Action Bar */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2.5">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
@@ -526,16 +580,37 @@ export function TeacherDocumentsPage() {
                 />
               </div>
 
-              <Button
-                variant="primary"
-                onClick={() => setIsUploadModalOpen(true)}
-                aria-label="Tải tài liệu mới"
-                className="bg-amber-700 hover:bg-amber-800 text-white shrink-0 cursor-pointer shadow-xs"
-              >
-                <Plus className="w-4 h-4 mr-1 sm:mr-1.5" />
-                <span className="hidden sm:inline">Tải tài liệu mới</span>
-                <span className="sm:hidden font-medium">Tải lên</span>
-              </Button>
+              <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                <Button
+                  variant="primary"
+                  onClick={() => navigate(`${editBasePath}/new`)}
+                  aria-label="Soạn thảo mới"
+                  className="bg-amber-700 hover:bg-amber-800 text-white shrink-0 cursor-pointer shadow-xs text-xs sm:text-sm"
+                >
+                  <PenTool className="w-4 h-4 mr-1 sm:mr-1.5" />
+                  <span>Soạn thảo mới</span>
+                </Button>
+
+                <Button
+                  variant="outline"
+                  onClick={() => setIsDocxImportModalOpen(true)}
+                  aria-label="Nhập từ Word"
+                  className="border-slate-300 text-slate-700 hover:bg-slate-50 shrink-0 cursor-pointer text-xs sm:text-sm"
+                >
+                  <FileText className="w-4 h-4 mr-1 sm:mr-1.5 text-blue-700" />
+                  <span>Nhập Word</span>
+                </Button>
+
+                <Button
+                  variant="outline"
+                  onClick={() => setIsUploadModalOpen(true)}
+                  aria-label="Tải tài liệu mới"
+                  className="border-slate-300 text-slate-700 hover:bg-slate-50 shrink-0 cursor-pointer text-xs sm:text-sm"
+                >
+                  <UploadCloud className="w-4 h-4 mr-1 sm:mr-1.5 text-slate-600" />
+                  <span>Tải tài liệu mới</span>
+                </Button>
+              </div>
             </div>
 
             {/* Documents Content */}
@@ -603,12 +678,18 @@ export function TeacherDocumentsPage() {
                           </button>
 
                           <div className="mt-0.5">
-                            {getFileTypeBadge(doc.mimeType, doc.originalName)}
+                            {getFileTypeBadge(doc.mimeType, doc.originalName, doc.type)}
                           </div>
 
                           <div className="min-w-0 flex-1 space-y-1">
                             <h4
-                              onClick={() => setDocToPreview(doc)}
+                              onClick={() => {
+                                if (doc.type === 'STRUCTURED_NOTE') {
+                                  navigate(`${editBasePath}/${doc.id}/edit`);
+                                } else {
+                                  setDocToPreview(doc);
+                                }
+                              }}
                               className="font-bold text-slate-900 hover:text-amber-800 text-sm sm:text-base cursor-pointer transition-colors truncate"
                               title={doc.title}
                             >
@@ -622,15 +703,21 @@ export function TeacherDocumentsPage() {
                             )}
 
                             <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] text-slate-500">
-                              <span className="font-mono text-slate-600 truncate max-w-xs" title={doc.originalName}>
-                                {doc.originalName}
-                              </span>
-                              <span>•</span>
+                              {doc.originalName && (
+                                <>
+                                  <span className="font-mono text-slate-600 truncate max-w-xs" title={doc.originalName}>
+                                    {doc.originalName}
+                                  </span>
+                                  <span>•</span>
+                                </>
+                              )}
                               <span className="font-medium text-slate-700">
                                 {formatBytes(doc.sizeBytes)}
                               </span>
                               <span>•</span>
                               <span>{formatDate(doc.createdAt)}</span>
+
+                              {getStatusBadge(doc.status)}
 
                               {doc.category ? (
                                 <Badge variant="primary" size="sm" className="text-[10px] px-2 py-0">
@@ -654,17 +741,45 @@ export function TeacherDocumentsPage() {
 
                         {/* Action buttons */}
                         <div className="flex items-center gap-1 shrink-0">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setDocToPreview(doc)}
-                            leftIcon={<Eye className="w-3.5 h-3.5" />}
-                            title="Xem tài liệu"
-                            aria-label="Xem tài liệu"
-                            className="min-h-[36px] sm:min-h-[32px] px-2.5 sm:px-3"
-                          >
-                            <span className="hidden sm:inline">Xem</span>
-                          </Button>
+                          {doc.type === 'STRUCTURED_NOTE' ? (
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              onClick={() => navigate(`${editBasePath}/${doc.id}/edit`)}
+                              leftIcon={<PenTool className="w-3.5 h-3.5" />}
+                              title="Soạn thảo tài liệu"
+                              aria-label="Soạn thảo tài liệu"
+                              className="min-h-[36px] sm:min-h-[32px] px-2.5 sm:px-3 bg-amber-700 hover:bg-amber-800 text-white"
+                            >
+                              <span className="hidden sm:inline">Soạn thảo</span>
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setDocToPreview(doc)}
+                              leftIcon={<Eye className="w-3.5 h-3.5" />}
+                              title="Xem tài liệu"
+                              aria-label="Xem tài liệu"
+                              className="min-h-[36px] sm:min-h-[32px] px-2.5 sm:px-3"
+                            >
+                              <span className="hidden sm:inline">Xem</span>
+                            </Button>
+                          )}
+
+                          {doc.type === 'STRUCTURED_NOTE' && (
+                            <IconButton
+                              icon={<Download className="w-3.5 h-3.5" />}
+                              title="Xuất file DOCX / PDF"
+                              aria-label="Xuất file DOCX / PDF"
+                              tooltip="Xuất file DOCX / PDF"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setDocToExport(doc)}
+                              className="text-slate-600 hover:text-slate-900"
+                            />
+                          )}
+
                           <Button
                             variant="secondary"
                             size="sm"
@@ -884,6 +999,34 @@ export function TeacherDocumentsPage() {
             </div>
           </div>
         </Modal>
+      )}
+
+      {/* MODAL: Nhập tài liệu DOCX */}
+      <DocxImportModal
+        isOpen={isDocxImportModalOpen}
+        onClose={() => setIsDocxImportModalOpen(false)}
+        categoriesTree={categoriesTree}
+        initialCategoryId={selectedCategoryId}
+        onSuccess={(newDoc, warnings) => {
+          queryClient.invalidateQueries({ queryKey: ['teacher-documents'] });
+          if (warnings && warnings.length > 0) {
+            info(`Tài liệu đã được nhập với một số cảnh báo định dạng`);
+          } else {
+            success('Nhập tài liệu từ Word thành công');
+          }
+          navigate(`${editBasePath}/${newDoc.id}/edit`);
+        }}
+      />
+
+      {/* MODAL: Xuất tài liệu DOCX / PDF */}
+      {docToExport && (
+        <ExportModal
+          isOpen={!!docToExport}
+          onClose={() => setDocToExport(null)}
+          documentId={docToExport.id}
+          documentTitle={docToExport.title}
+          currentRevision={docToExport.revision || 1}
+        />
       )}
     </div>
   );

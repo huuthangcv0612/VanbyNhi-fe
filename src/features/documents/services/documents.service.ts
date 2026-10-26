@@ -5,6 +5,15 @@ import type {
   CreateCategoryDto,
   UpdateCategoryDto,
   DocumentItem,
+  DocumentEntity,
+  CreateDocumentDto,
+  UpdateDocumentContentDto,
+  UpdateDocumentContentResponse,
+  DocumentVersionsResponse,
+  ImportDocumentDto,
+  ImportDocumentResponse,
+  ExportDocumentDto,
+  ExportResponse,
   InitUploadDto,
   InitUploadResponse,
   CompleteUploadDto,
@@ -450,6 +459,158 @@ export const teacherDocumentsService = {
     );
     return response.data;
   },
+
+  // ==================== STRUCTURED DOCUMENTS & OCC ====================
+
+  /**
+   * Tạo tài liệu cấu trúc mới
+   * POST /documents
+   */
+  async createDocument(
+    dto: CreateDocumentDto,
+  ): Promise<{ message: string; document: DocumentEntity }> {
+    const payload: CreateDocumentDto = {
+      title: dto.title.trim(),
+      description: dto.description?.trim() || undefined,
+      categoryId: dto.categoryId || undefined,
+      status: dto.status || 'DRAFT',
+      content: dto.content || undefined,
+    };
+    const response = await apiClient.post<{ message: string; document: DocumentEntity }>(
+      '/documents',
+      payload,
+    );
+    return response.data;
+  },
+
+  /**
+   * Lấy chi tiết tài liệu kèm nội dung Tiptap JSON
+   * GET /documents/:id
+   */
+  async getDocument(id: string): Promise<DocumentEntity> {
+    const response = await apiClient.get<DocumentEntity>(`/documents/${id}`);
+    return response.data;
+  },
+
+  /**
+   * Autosave & cập nhật nội dung có kiểm soát OCC (expectedRevision)
+   * PUT /documents/:id/content
+   */
+  async updateContent(
+    id: string,
+    dto: UpdateDocumentContentDto,
+  ): Promise<UpdateDocumentContentResponse> {
+    const response = await apiClient.put<UpdateDocumentContentResponse>(
+      `/documents/${id}/content`,
+      dto,
+    );
+    return response.data;
+  },
+
+  /**
+   * Xem lịch sử các phiên bản
+   * GET /documents/:id/versions
+   */
+  async getVersions(
+    id: string,
+    query?: { page?: number; limit?: number },
+  ): Promise<DocumentVersionsResponse> {
+    const response = await apiClient.get<DocumentVersionsResponse>(
+      `/documents/${id}/versions`,
+      { params: query },
+    );
+    return response.data;
+  },
+
+  /**
+   * Khôi phục phiên bản snapshot tạo revision mới
+   * POST /documents/:id/restore/:versionId
+   */
+  async restoreVersion(
+    id: string,
+    versionId: string,
+  ): Promise<{ message: string; revision: number; document: DocumentEntity }> {
+    const response = await apiClient.post<{
+      message: string;
+      revision: number;
+      document: DocumentEntity;
+    }>(`/documents/${id}/restore/${versionId}`);
+    return response.data;
+  },
+
+  /**
+   * Nhập tài liệu DOCX từ file đã upload lên R2
+   * POST /documents/import
+   */
+  async importDocx(dto: ImportDocumentDto): Promise<ImportDocumentResponse> {
+    const response = await apiClient.post<ImportDocumentResponse>(
+      '/documents/import',
+      dto,
+    );
+    return response.data;
+  },
+
+  /**
+   * Luồng hoàn chỉnh nhập DOCX:
+   * 1. initUpload (POST /teacher/documents/upload-url)
+   * 2. uploadFileToR2 (PUT to R2)
+   * 3. importDocx (POST /documents/import)
+   */
+  async importDocxFlow(
+    params: {
+      file: File;
+      title?: string;
+      categoryId?: string | null;
+    },
+    onProgressStage?: (stage: 'init' | 'uploading' | 'importing') => void,
+  ): Promise<ImportDocumentResponse> {
+    onProgressStage?.('init');
+    const docTitle = params.title?.trim() || params.file.name.replace(/\.[^/.]+$/, '');
+    const initRes = await this.initUpload({
+      title: docTitle,
+      originalName: params.file.name,
+      mimeType:
+        params.file.type ||
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      sizeBytes: params.file.size,
+      categoryId: params.categoryId || undefined,
+    });
+
+    onProgressStage?.('uploading');
+    await this.uploadFileToR2(initRes.uploadUrl, params.file, initRes.requiredHeaders);
+
+    onProgressStage?.('importing');
+    const importRes = await this.importDocx({
+      storageKey: initRes.storageKey,
+      title: docTitle,
+      categoryId: params.categoryId || undefined,
+    });
+
+    return importRes;
+  },
+
+  /**
+   * Tạo yêu cầu xuất file DOCX hoặc PDF
+   * POST /documents/:id/export
+   */
+  async exportDocument(id: string, dto: ExportDocumentDto): Promise<ExportResponse> {
+    const response = await apiClient.post<ExportResponse>(
+      `/documents/${id}/export`,
+      dto,
+    );
+    return response.data;
+  },
+
+  /**
+   * Kiểm tra trạng thái export job
+   * GET /documents/:id/export/:exportId
+   */
+  async getExportStatus(id: string, exportId: string): Promise<ExportResponse> {
+    const response = await apiClient.get<ExportResponse>(
+      `/documents/${id}/export/${exportId}`,
+    );
+    return response.data;
+  },
 };
 
 /**
@@ -484,3 +645,6 @@ export const studentDocumentsService = {
     return response.data;
   },
 };
+
+export const documentsService = teacherDocumentsService;
+

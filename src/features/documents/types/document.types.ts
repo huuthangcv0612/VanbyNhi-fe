@@ -29,16 +29,25 @@ export interface UpdateCategoryDto {
   sortOrder?: number;
 }
 
+export type DocumentType = 'STATIC_FILE' | 'STRUCTURED_NOTE';
+export type DocumentStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+export type DocumentExportFormat = 'DOCX' | 'PDF';
+export type DocumentExportStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+
 export interface DocumentItem {
   id: string;
   title: string;
   description: string | null;
-  originalName: string;
-  storageKey: string;
+  originalName?: string | null;
+  storageKey?: string | null;
   mimeType: string;
   sizeBytes: number;
   ownerId: string;
   categoryId: string | null;
+  type?: DocumentType;
+  status?: DocumentStatus;
+  revision?: number;
+  content?: Record<string, any> | null;
   createdAt: string;
   updatedAt: string;
   deletedAt?: string | null;
@@ -48,6 +57,88 @@ export interface DocumentItem {
     parentId?: string | null;
   } | null;
   usedInCount?: number;
+}
+
+export type DocumentEntity = DocumentItem;
+
+export interface CreateDocumentDto {
+  title: string;
+  description?: string;
+  categoryId?: string | null;
+  status?: DocumentStatus;
+  content?: Record<string, any>;
+}
+
+export interface UpdateDocumentContentDto {
+  expectedRevision: number;
+  content: Record<string, any>;
+  versionReason?: string;
+}
+
+export interface UpdateDocumentContentResponse {
+  message: string;
+  revision: number;
+  updatedAt: string;
+}
+
+export interface RevisionConflictError {
+  statusCode: 409;
+  error: 'Conflict';
+  errorCode: 'REVISION_CONFLICT';
+  message: string;
+  currentRevision: number | null;
+  expectedRevision: number;
+}
+
+export interface DocumentVersionEntity {
+  id: string;
+  documentId: string;
+  revision: number;
+  title: string;
+  reason: string | null;
+  createdAt: string;
+  actor: {
+    id: string;
+    fullName: string;
+    role: string;
+  };
+}
+
+export interface DocumentVersionsResponse {
+  items: DocumentVersionEntity[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
+export interface ImportDocumentDto {
+  storageKey: string;
+  title?: string;
+  categoryId?: string | null;
+}
+
+export interface ImportDocumentResponse {
+  message: string;
+  document: DocumentEntity;
+  warnings?: string[];
+}
+
+export interface ExportDocumentDto {
+  format: DocumentExportFormat;
+}
+
+export interface ExportResponse {
+  jobId: string;
+  status: DocumentExportStatus;
+  format: DocumentExportFormat;
+  revision: number;
+  downloadUrl?: string | null;
+  expiresInSeconds?: number | null;
+  errorMessage?: string | null;
+  createdAt?: string;
 }
 
 export interface InitUploadDto {
