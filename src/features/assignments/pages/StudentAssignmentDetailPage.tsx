@@ -111,7 +111,7 @@ export function StudentAssignmentDetailPage() {
 
         <PageHeader
           title={assignment?.title || 'Đề bài tập'}
-          description={`Lớp học: ${assignment?.class?.name || '...'} (${assignment?.class?.classCode || ''})`}
+          description={`Lớp học: ${assignment?.class?.name || '...'}`}
         />
       </div>
 

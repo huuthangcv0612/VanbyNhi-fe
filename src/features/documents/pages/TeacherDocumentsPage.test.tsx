@@ -156,7 +156,7 @@ describe('TeacherDocumentsPage', () => {
   it('opens category creation modal when clicking "Tạo thư mục"', async () => {
     renderWithClient(<TeacherDocumentsPage />);
 
-    const createFolderBtn = screen.getByRole('button', { name: /Tạo thư mục/i });
+    const createFolderBtn = await screen.findByRole('button', { name: /Tạo thư mục/i });
     await userEvent.click(createFolderBtn);
 
     expect(screen.getByText('Tạo danh mục mới')).toBeInTheDocument();

@@ -7,6 +7,7 @@ import {
   Users,
   CheckCircle2,
   X,
+  Filter,
 } from 'lucide-react';
 import { teacherClassesService } from '../services/classes.service';
 import type { ClassItem, TeacherCreateClassDto, TeacherUpdateClassDto } from '../types/class.types';
@@ -190,27 +191,29 @@ export function TeacherClassesListPage() {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <PageHeader
-          title="Quản lý Lớp học"
-          description="Danh sách các lớp học do bạn giảng dạy — sắp xếp tự động theo lớp đang diễn ra và sắp tới"
-        />
-        <Button
-          onClick={() => {
-            setEditingClass(null);
-            setIsFormOpen(true);
-          }}
-          className="self-start sm:self-auto shrink-0 bg-amber-700 hover:bg-amber-800 text-white cursor-pointer"
-        >
-          <Plus className="w-4 h-4 mr-1.5" />
-          Tạo lớp mới
-        </Button>
-      </div>
+      {/* Page Header with responsive action button */}
+      <PageHeader
+        title="Quản lý Lớp học"
+        description="Danh sách các lớp học do bạn giảng dạy — sắp xếp tự động theo lớp đang diễn ra và sắp tới"
+        action={
+          <Button
+            onClick={() => {
+              setEditingClass(null);
+              setIsFormOpen(true);
+            }}
+            aria-label="Tạo lớp mới"
+            className="shrink-0 bg-amber-700 hover:bg-amber-800 text-white cursor-pointer"
+          >
+            <Plus className="w-4 h-4 mr-1 sm:mr-1.5" />
+            <span className="hidden sm:inline">Tạo lớp mới</span>
+            <span className="sm:hidden font-medium">Tạo lớp</span>
+          </Button>
+        }
+      />
 
-      {/* Overview Statistics (chỉ dựa trên dữ liệu thực tế) */}
+      {/* Overview Statistics */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-700 border border-amber-200 shrink-0">
               <BookOpen className="w-5 h-5" />
@@ -222,7 +225,7 @@ export function TeacherClassesListPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
               <CheckCircle2 className="w-5 h-5" />
@@ -234,7 +237,7 @@ export function TeacherClassesListPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700 border border-blue-200 shrink-0">
               <Users className="w-5 h-5" />
@@ -248,20 +251,21 @@ export function TeacherClassesListPage() {
       </div>
 
       {/* Toolbar: Tìm kiếm, Lọc trạng thái */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs">
         <div className="relative flex-1 sm:max-w-md">
           <Input
             placeholder="Tìm theo tên lớp, mã tham gia hoặc mô tả..."
             value={search}
             onChange={(e) => handleSearchChange(e.target.value)}
             leftIcon={<Search className="w-4 h-4 text-slate-400" />}
+            aria-label="Tìm kiếm lớp học"
           />
           {search && (
             <button
               type="button"
               onClick={handleClearSearch}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded cursor-pointer"
-              title="Xóa tìm kiếm"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 rounded-md cursor-pointer min-h-[32px] min-w-[32px] flex items-center justify-center"
+              aria-label="Xóa tìm kiếm"
             >
               <X className="w-4 h-4" />
             </button>
@@ -269,11 +273,13 @@ export function TeacherClassesListPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <label className="text-xs font-medium text-slate-500 whitespace-nowrap">Trạng thái:</label>
+          <Filter className="w-4 h-4 text-slate-400 shrink-0 hidden sm:inline" />
+          <label className="text-xs font-medium text-slate-500 whitespace-nowrap sr-only sm:not-sr-only">Trạng thái:</label>
           <select
             value={statusFilter}
             onChange={(e) => handleStatusChange(e.target.value)}
-            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 shadow-xs focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20 cursor-pointer"
+            aria-label="Lọc theo trạng thái lớp học"
+            className="flex-1 sm:flex-none rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs sm:text-sm text-slate-700 shadow-2xs focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20 cursor-pointer min-h-[42px] sm:min-h-[38px]"
           >
             <option value="ALL">Tất cả trạng thái</option>
             <option value="ACTIVE">Đang mở (ACTIVE)</option>

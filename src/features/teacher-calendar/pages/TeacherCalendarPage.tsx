@@ -1,7 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Plus } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { Button } from '@/components/ui/button';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { CalendarToolbar } from '../components/CalendarToolbar';
 import { MonthView } from '../components/MonthView';
@@ -189,17 +187,7 @@ export function TeacherCalendarPage() {
       <PageHeader
         title="Lịch giảng dạy"
         description="Quản lý lịch trình giảng dạy, các ca dạy văn, phòng học trực tuyến và học sinh tham gia"
-        action={
-          <Button
-            type="button"
-            variant="primary"
-            onClick={handleOpenCreateForm}
-            leftIcon={<Plus className="w-4 h-4" />}
-            className="bg-amber-700 hover:bg-amber-800 text-white shadow-xs"
-          >
-            Tạo lịch
-          </Button>
-        }
+        className="mb-0"
       />
 
       {/* Calendar Toolbar */}

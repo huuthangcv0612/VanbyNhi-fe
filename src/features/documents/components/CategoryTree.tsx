@@ -177,6 +177,7 @@ export function CategoryTree({
           onClick={() => onAddCategory(undefined)}
           className="inline-flex items-center gap-1 text-xs text-amber-700 hover:text-amber-800 font-medium hover:underline cursor-pointer"
           title="Tạo danh mục gốc mới"
+          aria-label="Tạo thư mục"
         >
           <FolderPlus className="w-3.5 h-3.5" />
           <span>Thư mục mới</span>

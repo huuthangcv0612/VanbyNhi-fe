@@ -182,7 +182,7 @@ export function TeacherAssignmentDetailPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <PageHeader
             title={assignment?.title || 'Chi tiết bài tập'}
-            description={`Lớp: ${assignment?.class?.name || '...'} (${assignment?.class?.classCode || ''})`}
+            description={`Lớp: ${assignment?.class?.name || '...'}`}
           />
 
           <div className="flex items-center gap-2">

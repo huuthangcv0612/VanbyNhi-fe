@@ -1,112 +1,78 @@
-import { Menu, Bell, User as UserIcon, LogOut, Shield, FolderOpen, BookOpen } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { Bell, User as UserIcon, LogOut, Shield } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
 import { Breadcrumbs } from './Breadcrumbs';
 import { Dropdown } from '@/components/ui/dropdown';
+import { IconButton } from '@/components/ui/icon-button';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { getRoleMeta } from '@/utils/formatters';
 
 export interface TopbarProps {
-  onOpenSidebar: () => void;
+  onOpenSidebar?: () => void;
 }
 
-export function Topbar({ onOpenSidebar }: TopbarProps) {
+export function Topbar({ onOpenSidebar: _onOpenSidebar }: TopbarProps) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
 
   const roleMeta = user ? getRoleMeta(user.role) : null;
-  const isDocActive = location.pathname.includes('/documents');
-
-  // Role-appropriate naming and route
-  const getDocumentNavConfig = () => {
-    if (user?.role === 'TEACHER') {
-      return {
-        label: 'Quản lý tài liệu',
-        to: '/teacher/documents',
-        title: 'Trang quản lý tài liệu giảng dạy',
-        icon: FolderOpen,
-      };
-    }
-    if (user?.role === 'ADMIN') {
-      return {
-        label: 'Quản lý tài liệu',
-        to: '/teacher/documents',
-        title: 'Quản lý tài liệu hệ thống',
-        icon: FolderOpen,
-      };
-    }
-    return {
-      label: 'Tài liệu học tập',
-      to: '/student/documents',
-      title: 'Kho tài liệu học tập môn Văn',
-      icon: BookOpen,
-    };
-  };
-
-  const docNav = getDocumentNavConfig();
+  const homePath =
+    user?.role === 'TEACHER'
+      ? '/teacher/dashboard'
+      : user?.role === 'ADMIN'
+        ? '/admin/dashboard'
+        : '/student/dashboard';
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white/95 px-4 sm:px-6 backdrop-blur-xs">
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={onOpenSidebar}
-          className="lg:hidden p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700 cursor-pointer"
-          aria-label="Mở danh mục điều hướng"
+    <header className="sticky top-0 z-20 flex h-16 w-full items-center justify-between border-b border-slate-200/80 bg-white/85 px-3 sm:px-6 backdrop-blur-md transition-all">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+        {/* Mobile & Tablet Brand (replaces hamburger + breadcrumbs) */}
+        <Link
+          to={homePath}
+          className="flex lg:hidden items-center gap-2 shrink-0 cursor-pointer"
+          aria-label="Về trang chủ"
         >
-          <Menu className="w-5 h-5" />
-        </button>
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-700 text-white font-bold font-serif shadow-xs">
+            V
+          </div>
+          <span className="text-sm font-bold tracking-tight text-slate-900 font-serif">
+            VanbyNhi
+          </span>
+        </Link>
 
-        <Breadcrumbs />
+        {/* Desktop Breadcrumbs (Hidden on Mobile & Tablet) */}
+        <div className="hidden lg:block min-w-0">
+          <Breadcrumbs />
+        </div>
       </div>
 
-      <div className="flex items-center gap-2 sm:gap-3">
-        {/* Document navigation item */}
-        {docNav && (
-          <button
-            type="button"
-            onClick={() => navigate(docNav.to)}
-            className={`flex items-center gap-2 p-2 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all cursor-pointer ${
-              isDocActive
-                ? 'bg-amber-100/90 text-amber-900 border border-amber-300 font-semibold shadow-xs'
-                : 'text-slate-700 hover:text-amber-800 hover:bg-amber-50/80 border border-slate-200/80 hover:border-amber-200'
-            }`}
-            aria-label={docNav.label}
-            title={docNav.title}
-          >
-            <docNav.icon
-              className={`w-4 h-4 shrink-0 ${isDocActive ? 'text-amber-800' : 'text-amber-600'}`}
-            />
-            <span className="hidden sm:inline">{docNav.label}</span>
-          </button>
-        )}
+      <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
 
-        {/* Quick notification link */}
-        <button
-          type="button"
+        {/* Quick notification button */}
+        <IconButton
+          icon={<Bell className="w-4 h-4 text-slate-600" />}
+          aria-label="Xem thông báo"
+          variant="ghost"
+          size="md"
           onClick={() => {
             const role = user?.role?.toLowerCase() || 'student';
             navigate(`/${role}/notifications`);
           }}
-          className="relative p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
-          aria-label="Xem thông báo"
-        >
-          <Bell className="w-5 h-5" />
-        </button>
+          className="hover:bg-slate-100 text-slate-600 hover:text-slate-900"
+        />
 
-        {/* User profile dropdown */}
+        {/* User profile dropdown (Apple squircle) */}
         <Dropdown
           align="right"
           trigger={
-            <div className="flex items-center gap-2.5 p-1 rounded-xl hover:bg-slate-100/80 transition-colors">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100 text-amber-800 font-semibold text-xs border border-amber-200">
+            <div className="flex items-center gap-2 p-1 rounded-xl hover:bg-slate-100/90 transition-colors cursor-pointer select-none">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-100/90 text-amber-800 font-bold text-xs border border-amber-200/80 shadow-2xs">
                 {user?.fullName ? user.fullName.charAt(0).toUpperCase() : 'U'}
               </div>
-              <div className="hidden sm:block text-left text-xs">
-                <p className="font-semibold text-slate-800 leading-tight">
+              <div className="hidden sm:block text-left text-xs max-w-[120px] truncate">
+                <p className="font-semibold text-slate-800 leading-tight truncate">
                   {user?.fullName || 'Người dùng'}
                 </p>
-                <p className="text-[11px] text-slate-500">{roleMeta?.label}</p>
+                <p className="text-[11px] text-slate-500 truncate">{roleMeta?.label}</p>
               </div>
             </div>
           }

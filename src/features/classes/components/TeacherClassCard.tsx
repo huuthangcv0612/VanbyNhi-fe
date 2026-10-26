@@ -6,7 +6,7 @@ import {
   Sparkles,
   Copy,
   Check,
-  Edit2,
+  Pencil,
   Lock,
   Unlock,
   ArrowRight,
@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import type { ClassItem } from '../types/class.types';
 import { Badge } from '@/components/ui/badge';
+import { IconButton } from '@/components/ui/icon-button';
+import { Tooltip } from '@/components/ui/tooltip';
 import {
   getClassStatusMeta,
   formatCurrency,
@@ -50,34 +52,38 @@ export function TeacherClassCard({
       }`}
     >
       <div className="space-y-4">
-        {/* Header row: Status badge + Quick actions */}
+        {/* Header row: Status badge + Quick actions with accessible icon buttons */}
         <div className="flex items-center justify-between gap-2">
           <Badge className={statusMeta.badgeClass} size="sm">
             {statusMeta.label}
           </Badge>
 
           <div className="flex items-center gap-1">
-            <button
-              type="button"
+            <IconButton
+              icon={<Pencil className="w-3.5 h-3.5" />}
+              aria-label="Chỉnh sửa thông tin lớp"
+              tooltip="Chỉnh sửa thông tin lớp"
+              variant="ghost"
+              size="sm"
               onClick={() => onEdit(classItem)}
-              title="Chỉnh sửa thông tin lớp"
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
-            >
-              <Edit2 className="w-3.5 h-3.5" />
-            </button>
+              className="text-slate-400 hover:text-slate-800"
+            />
 
-            <button
-              type="button"
+            <IconButton
+              icon={
+                isClosed ? (
+                  <Unlock className="w-3.5 h-3.5 text-emerald-600" />
+                ) : (
+                  <Lock className="w-3.5 h-3.5 text-amber-600" />
+                )
+              }
+              aria-label={isClosed ? 'Mở lại lớp học' : 'Đóng lớp học'}
+              tooltip={isClosed ? 'Mở lại lớp học' : 'Đóng lớp học'}
+              variant="ghost"
+              size="sm"
               onClick={() => onToggleStatus(classItem)}
-              title={isClosed ? 'Mở lại lớp học' : 'Đóng lớp học'}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
-            >
-              {isClosed ? (
-                <Unlock className="w-3.5 h-3.5 text-emerald-600" />
-              ) : (
-                <Lock className="w-3.5 h-3.5 text-amber-600" />
-              )}
-            </button>
+              className="text-slate-400 hover:text-slate-800"
+            />
           </div>
         </div>
 
@@ -100,9 +106,9 @@ export function TeacherClassCard({
           )}
         </div>
 
-        {/* Code row: classCode vs joinCode (clearly distinguished) */}
+        {/* Code row: classCode vs joinCode */}
         <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs">
-          <div className="flex items-center gap-1 text-slate-500 min-w-0" title={`Mã lớp: ${classItem.classCode || classItem.id}`}>
+          <div className="flex items-center gap-1 text-slate-500 min-w-0">
             <Hash className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             <span className="text-[11px] text-slate-400">Mã lớp:</span>
             <span className="font-mono text-xs font-semibold text-slate-700 truncate max-w-[90px]">
@@ -115,18 +121,20 @@ export function TeacherClassCard({
             <span className="font-mono text-xs font-bold text-amber-950 tracking-wider">
               {classItem.joinCode}
             </span>
-            <button
-              type="button"
-              onClick={() => onCopyCode(classItem.joinCode)}
-              title="Sao chép mã tham gia"
-              className="text-amber-700 hover:text-amber-950 cursor-pointer p-0.5 rounded transition-colors"
-            >
-              {isCopied ? (
-                <Check className="w-3.5 h-3.5 text-emerald-600" />
-              ) : (
-                <Copy className="w-3.5 h-3.5" />
-              )}
-            </button>
+            <Tooltip content={isCopied ? 'Đã sao chép' : 'Sao chép mã tham gia'}>
+              <button
+                type="button"
+                onClick={() => onCopyCode(classItem.joinCode)}
+                aria-label="Sao chép mã tham gia"
+                className="text-amber-700 hover:text-amber-950 cursor-pointer p-1 rounded-md transition-colors min-h-[32px] min-w-[32px] flex items-center justify-center"
+              >
+                {isCopied ? (
+                  <Check className="w-3.5 h-3.5 text-emerald-600" />
+                ) : (
+                  <Copy className="w-3.5 h-3.5" />
+                )}
+              </button>
+            </Tooltip>
           </div>
         </div>
 
@@ -165,7 +173,7 @@ export function TeacherClassCard({
           </div>
         </div>
 
-        {/* Next session section: strict business rule */}
+        {/* Next session section */}
         {nextSession ? (
           <div
             className={`rounded-xl border p-3 space-y-1.5 transition-colors ${
@@ -214,7 +222,7 @@ export function TeacherClassCard({
       <div className="pt-4 mt-4 border-t border-slate-100">
         <Link
           to={`/teacher/classes/${classItem.id}`}
-          className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-amber-700 text-white text-xs font-semibold hover:bg-amber-800 transition-colors shadow-xs cursor-pointer"
+          className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-amber-700 text-white text-xs font-semibold hover:bg-amber-800 transition-colors shadow-xs cursor-pointer min-h-[40px]"
         >
           <span>Vào quản lý lớp</span>
           <ArrowRight className="w-3.5 h-3.5" />

@@ -150,7 +150,7 @@ export function ShareDocumentModal({
             <option value="">-- Chọn lớp học --</option>
             {classes.map((cls) => (
               <option key={cls.id} value={cls.id}>
-                {cls.name} ({cls.status})
+                {cls.name}
               </option>
             ))}
           </select>

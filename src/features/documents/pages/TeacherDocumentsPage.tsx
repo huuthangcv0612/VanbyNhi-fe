@@ -5,14 +5,13 @@ import {
   Plus,
   Search,
   Trash2,
-  Edit2,
+  Pencil,
   Eye,
   Share2,
   Files,
   Inbox,
   AlertCircle,
   ChevronRight,
-  FolderPlus,
   FileCheck,
   CheckSquare,
   Square,
@@ -21,6 +20,8 @@ import {
 } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/ui/icon-button';
+import { SegmentedTabs } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Modal } from '@/components/ui/modal';
@@ -333,72 +334,29 @@ export function TeacherDocumentsPage() {
       <PageHeader
         title="Quản lý tài liệu giảng dạy"
         description="Thư viện tài liệu cá nhân của giáo viên: tổ chức cây danh mục nhiều cấp, lưu trữ đám mây Cloudflare R2 và chia sẻ tới các lớp học"
-        action={
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleOpenAssignForSelected}
-              leftIcon={<Share2 className="w-4 h-4 text-amber-700" />}
-              disabled={selectedDocIds.length === 0}
-              title={
-                selectedDocIds.length > 0
-                  ? `Cấp quyền ${selectedDocIds.length} tài liệu đã chọn cho các lớp`
-                  : 'Chọn ít nhất 1 tài liệu trong danh sách để cấp quyền'
-              }
-            >
-              Cấp quyền cho lớp {selectedDocIds.length > 0 ? `(${selectedDocIds.length})` : ''}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCategoryModalState({ isOpen: true })}
-              leftIcon={<FolderPlus className="w-4 h-4" />}
-            >
-              Tạo thư mục
-            </Button>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => setIsUploadModalOpen(true)}
-              leftIcon={<Plus className="w-4 h-4" />}
-            >
-              Tải tài liệu mới
-            </Button>
-          </div>
-        }
+        className="mb-0"
       />
 
-      {/* View Switcher: Thư viện tài liệu vs Tài liệu đã cấp theo lớp */}
-      <div className="flex items-center gap-4 border-b border-slate-200 text-xs sm:text-sm font-semibold">
-        <button
-          type="button"
-          onClick={() => setActiveTab('library')}
-          className={`flex items-center gap-2 pb-3 px-1 border-b-2 transition-all cursor-pointer ${
-            activeTab === 'library'
-              ? 'border-amber-700 text-amber-800'
-              : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
-          }`}
-        >
-          <Files className="w-4 h-4" />
-          <span>Thư viện tài liệu</span>
-          <span className="text-[11px] px-1.5 py-0.2 rounded-full bg-slate-100 text-slate-600 font-normal">
-            {totalAllDocs}
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('assigned')}
-          className={`flex items-center gap-2 pb-3 px-1 border-b-2 transition-all cursor-pointer ${
-            activeTab === 'assigned'
-              ? 'border-amber-700 text-amber-800'
-              : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
-          }`}
-        >
-          <Layers className="w-4 h-4" />
-          <span>Đã cấp quyền theo lớp</span>
-        </button>
+      {/* View Switcher: Apple SegmentedTabs with Motion */}
+      <div className="overflow-x-auto pb-1 scrollbar-none">
+        <SegmentedTabs<'library' | 'assigned'>
+          activeTab={activeTab}
+          onChange={(tab) => setActiveTab(tab)}
+          layoutId="teacherDocsActiveTab"
+          tabs={[
+            {
+              id: 'library',
+              label: 'Thư viện tài liệu',
+              icon: <Files className="w-4 h-4" />,
+              badge: totalAllDocs,
+            },
+            {
+              id: 'assigned',
+              label: 'Đã cấp quyền theo lớp',
+              icon: <Layers className="w-4 h-4" />,
+            },
+          ]}
+        />
       </div>
 
       {activeTab === 'assigned' ? (
@@ -552,19 +510,32 @@ export function TeacherDocumentsPage() {
               </div>
             </div>
 
-            {/* Search bar */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setPage(1);
-                }}
-                placeholder="Tìm kiếm theo tiêu đề tài liệu, tên file gốc hoặc mô tả..."
-                className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 bg-white shadow-2xs focus:outline-none focus:ring-2 focus:ring-amber-500"
-              />
+            {/* Search and Action Bar */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setPage(1);
+                  }}
+                  placeholder="Tìm kiếm theo tiêu đề tài liệu, tên file gốc hoặc mô tả..."
+                  className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 bg-white shadow-2xs focus:outline-none focus:ring-2 focus:ring-amber-500"
+                />
+              </div>
+
+              <Button
+                variant="primary"
+                onClick={() => setIsUploadModalOpen(true)}
+                aria-label="Tải tài liệu mới"
+                className="bg-amber-700 hover:bg-amber-800 text-white shrink-0 cursor-pointer shadow-xs"
+              >
+                <Plus className="w-4 h-4 mr-1 sm:mr-1.5" />
+                <span className="hidden sm:inline">Tải tài liệu mới</span>
+                <span className="sm:hidden font-medium">Tải lên</span>
+              </Button>
             </div>
 
             {/* Documents Content */}
@@ -689,8 +660,10 @@ export function TeacherDocumentsPage() {
                             onClick={() => setDocToPreview(doc)}
                             leftIcon={<Eye className="w-3.5 h-3.5" />}
                             title="Xem tài liệu"
+                            aria-label="Xem tài liệu"
+                            className="min-h-[36px] sm:min-h-[32px] px-2.5 sm:px-3"
                           >
-                            Xem
+                            <span className="hidden sm:inline">Xem</span>
                           </Button>
                           <Button
                             variant="secondary"
@@ -698,25 +671,30 @@ export function TeacherDocumentsPage() {
                             onClick={() => handleOpenAssignForSingleDoc(doc)}
                             leftIcon={<Share2 className="w-3.5 h-3.5 text-amber-700" />}
                             title="Cấp quyền cho lớp học"
+                            aria-label="Cấp quyền cho lớp học"
+                            className="min-h-[36px] sm:min-h-[32px] px-2.5 sm:px-3"
                           >
-                            Cấp quyền
+                            <span className="hidden sm:inline">Cấp quyền</span>
                           </Button>
-                          <button
-                            type="button"
-                            onClick={() => setDocToEdit(doc)}
-                            className="p-1.5 text-slate-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                          <IconButton
+                            icon={<Pencil className="w-3.5 h-3.5" />}
                             title="Chỉnh sửa thông tin"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setDocToDelete(doc)}
-                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                            aria-label="Chỉnh sửa thông tin"
+                            tooltip="Chỉnh sửa thông tin"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setDocToEdit(doc)}
+                            className="text-slate-500 hover:text-slate-900"
+                          />
+                          <IconButton
+                            icon={<Trash2 className="w-3.5 h-3.5" />}
                             title="Xóa tài liệu"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                            aria-label="Xóa tài liệu"
+                            tooltip="Xóa tài liệu"
+                            variant="danger"
+                            size="sm"
+                            onClick={() => setDocToDelete(doc)}
+                          />
                         </div>
                       </div>
                     </div>

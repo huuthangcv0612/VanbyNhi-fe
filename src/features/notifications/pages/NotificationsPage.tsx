@@ -4,7 +4,6 @@ import { Bell, CheckCheck } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { apiClient } from '@/lib/api-client';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
@@ -69,9 +68,11 @@ export function NotificationsPage() {
               size="sm"
               onClick={() => markAllAsReadMutation.mutate()}
               isLoading={markAllAsReadMutation.isPending}
-              leftIcon={<CheckCheck className="w-4 h-4" />}
+              leftIcon={<CheckCheck className="w-4 h-4 text-amber-700" />}
+              aria-label="Đánh dấu tất cả đã đọc"
             >
-              Đánh dấu tất cả đã đọc
+              <span className="hidden sm:inline">Đánh dấu tất cả đã đọc</span>
+              <span className="sm:hidden font-medium">Đã đọc tất cả</span>
             </Button>
           ) : undefined
         }
@@ -86,15 +87,15 @@ export function NotificationsPage() {
       ) : isLoading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="rounded-xl border border-slate-200 bg-white p-4 space-y-2">
-              <Skeleton className="h-4 w-1/4" />
-              <Skeleton className="h-4 w-3/4" />
+            <div key={i} className="rounded-2xl border border-slate-200/80 bg-white p-4 space-y-2">
+              <Skeleton className="h-4 w-1/4 rounded" />
+              <Skeleton className="h-4 w-3/4 rounded" />
             </div>
           ))}
         </div>
       ) : notifications.length === 0 ? (
         <EmptyState
-          icon={<Bell className="w-6 h-6 text-slate-400" />}
+          icon={<Bell className="w-8 h-8 text-slate-400" />}
           title="Không có thông báo mới"
           description="Hiện tại hộp thư thông báo của bạn đang trống."
         />
@@ -108,27 +109,25 @@ export function NotificationsPage() {
                   markSingleAsReadMutation.mutate(item.id);
                 }
               }}
-              className={`rounded-xl border p-4 transition-all cursor-pointer ${
+              className={`rounded-2xl border p-4 transition-all cursor-pointer ${
                 item.isRead
-                  ? 'border-slate-200 bg-white text-slate-700'
-                  : 'border-amber-200 bg-amber-50/40 text-slate-900 shadow-xs'
+                  ? 'border-slate-200/80 bg-white text-slate-700 hover:border-slate-300'
+                  : 'border-amber-300/80 bg-amber-50/40 text-slate-900 shadow-2xs hover:border-amber-400'
               }`}
             >
               <div className="flex items-start justify-between gap-3">
-                <div className="space-y-1">
+                <div className="space-y-1 min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <h4 className="text-sm font-semibold">{item.title}</h4>
+                    <h4 className="text-sm font-bold font-serif">{item.title}</h4>
                     {!item.isRead && (
-                      <Badge variant="primary" size="sm">
-                        Mới
-                      </Badge>
+                      <span className="h-2 w-2 rounded-full bg-amber-600 shrink-0" aria-label="Chưa đọc" />
                     )}
                   </div>
-                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed break-words">
                     {item.content}
                   </p>
                 </div>
-                <span className="text-[11px] text-slate-400 shrink-0">
+                <span className="text-[11px] text-slate-400 shrink-0 font-mono">
                   {formatDate(item.createdAt)}
                 </span>
               </div>

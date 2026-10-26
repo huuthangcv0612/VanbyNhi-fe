@@ -134,7 +134,7 @@ export function ScheduleFilters({
               <option value="">Tất cả lớp học ({classes.length})</option>
               {classes.map((cls) => (
                 <option key={cls.id} value={cls.id}>
-                  {cls.name} ({cls.classCode})
+                  {cls.name}
                 </option>
               ))}
             </select>

@@ -45,6 +45,7 @@ import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@
 import { Skeleton, SkeletonTableRows } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
+import { SegmentedTabs } from '@/components/ui/tabs';
 
 type TabKey = 'overview' | 'history' | 'monthly' | 'requests' | 'export' | 'config';
 
@@ -383,7 +384,7 @@ export function AttendancePage() {
             ) : (
               classes.map((cls) => (
                 <option key={cls.id} value={cls.id}>
-                  {cls.name}{cls.classCode ? ` (${cls.classCode})` : ''}
+                  {cls.name}
                 </option>
               ))
             )}
@@ -424,97 +425,31 @@ export function AttendancePage() {
         </div>
       </div>
 
-      {/* Tabs Navigation */}
-      <div className="border-b border-slate-200">
-        <nav className="flex space-x-2 sm:space-x-6 overflow-x-auto">
-          <button
-            type="button"
-            onClick={() => setActiveTab('overview')}
-            className={`py-3 px-1 text-sm font-medium border-b-2 transition-colors cursor-pointer flex items-center gap-2 whitespace-nowrap ${
-              activeTab === 'overview'
-                ? 'border-amber-600 text-amber-900 font-bold'
-                : 'border-transparent text-slate-500 hover:text-slate-700'
-            }`}
-          >
-            <ClipboardCheck className="w-4 h-4" />
-            <span>Tổng quan</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('history')}
-            className={`py-3 px-1 text-sm font-medium border-b-2 transition-colors cursor-pointer flex items-center gap-2 whitespace-nowrap ${
-              activeTab === 'history'
-                ? 'border-amber-600 text-amber-900 font-bold'
-                : 'border-transparent text-slate-500 hover:text-slate-700'
-            }`}
-          >
-            <History className="w-4 h-4" />
-            <span>Lịch sử điểm danh</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('monthly')}
-            className={`py-3 px-1 text-sm font-medium border-b-2 transition-colors cursor-pointer flex items-center gap-2 whitespace-nowrap ${
-              activeTab === 'monthly'
-                ? 'border-amber-600 text-amber-900 font-bold'
-                : 'border-transparent text-slate-500 hover:text-slate-700'
-            }`}
-          >
-            <Calendar className="w-4 h-4" />
-            <span>Tổng hợp tháng</span>
-            {monthlyData?.isClosed && (
-              <span className="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.2 rounded font-bold">
-                Đã chốt
-              </span>
-            )}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('requests')}
-            className={`py-3 px-1 text-sm font-medium border-b-2 transition-colors cursor-pointer flex items-center gap-2 whitespace-nowrap ${
-              activeTab === 'requests'
-                ? 'border-amber-600 text-amber-900 font-bold'
-                : 'border-transparent text-slate-500 hover:text-slate-700'
-            }`}
-          >
-            <AlertCircle className="w-4 h-4" />
-            <span>Yêu cầu điều chỉnh</span>
-            {(requestsData?.pagination.total || 0) > 0 && (
-              <span className="ml-1 rounded-full bg-amber-500 text-white px-2 py-0.5 text-xs font-bold">
-                {requestsData?.pagination.total}
-              </span>
-            )}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('export')}
-            className={`py-3 px-1 text-sm font-medium border-b-2 transition-colors cursor-pointer flex items-center gap-2 whitespace-nowrap ${
-              activeTab === 'export'
-                ? 'border-amber-600 text-amber-900 font-bold'
-                : 'border-transparent text-slate-500 hover:text-slate-700'
-            }`}
-          >
-            <FileSpreadsheet className="w-4 h-4" />
-            <span>Xuất Excel</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('config')}
-            className={`py-3 px-1 text-sm font-medium border-b-2 transition-colors cursor-pointer flex items-center gap-2 whitespace-nowrap ${
-              activeTab === 'config'
-                ? 'border-amber-600 text-amber-900 font-bold'
-                : 'border-transparent text-slate-500 hover:text-slate-700'
-            }`}
-          >
-            <Settings className="w-4 h-4" />
-            <span>Cấu hình tính phí</span>
-          </button>
-        </nav>
+      {/* Tabs Navigation (Apple Segmented Control with Motion) */}
+      <div className="overflow-x-auto pb-1 scrollbar-none">
+        <SegmentedTabs<TabKey>
+          activeTab={activeTab}
+          onChange={(tab) => setActiveTab(tab)}
+          layoutId="attendanceActiveTab"
+          tabs={[
+            { id: 'overview', label: 'Tổng quan', icon: <ClipboardCheck className="w-4 h-4" /> },
+            { id: 'history', label: 'Lịch sử điểm danh', icon: <History className="w-4 h-4" /> },
+            {
+              id: 'monthly',
+              label: 'Tổng hợp tháng',
+              icon: <Calendar className="w-4 h-4" />,
+              badge: monthlyData?.isClosed ? 'Đã chốt' : undefined,
+            },
+            {
+              id: 'requests',
+              label: 'Yêu cầu điều chỉnh',
+              icon: <AlertCircle className="w-4 h-4" />,
+              badge: (requestsData?.pagination.total || 0) > 0 ? requestsData?.pagination.total : undefined,
+            },
+            { id: 'export', label: 'Xuất Excel', icon: <FileSpreadsheet className="w-4 h-4" /> },
+            { id: 'config', label: 'Cấu hình tính phí', icon: <Settings className="w-4 h-4" /> },
+          ]}
+        />
       </div>
 
       {/* ==================== TAB 1: TỔNG QUAN ==================== */}

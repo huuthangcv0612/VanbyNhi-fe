@@ -208,7 +208,7 @@ function AssignmentFormInner({
             <option value="">-- Chọn lớp học --</option>
             {classes.map((cls) => (
               <option key={cls.id} value={cls.id}>
-                {cls.name} ({cls.classCode})
+                {cls.name}
               </option>
             ))}
           </select>

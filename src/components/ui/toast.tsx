@@ -1,7 +1,10 @@
 import React, { useState, useCallback } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { CheckCircle2, AlertCircle, Info, AlertTriangle, X } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { ToastContext, type ToastItem } from './ToastContext';
+import { appleSpring } from '@/utils/motion';
+import { IconButton } from './icon-button';
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
@@ -49,48 +52,54 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     >
       {children}
       <div
-        className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"
+        className="fixed bottom-20 sm:bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-2 sm:px-0"
         aria-live="polite"
       >
-        {toasts.map((toast) => {
-          const icons = {
-            success: <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />,
-            error: <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />,
-            warning: <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />,
-            info: <Info className="w-5 h-5 text-blue-600 shrink-0" />,
-          };
+        <AnimatePresence>
+          {toasts.map((toast) => {
+            const icons = {
+              success: <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />,
+              error: <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />,
+              warning: <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />,
+              info: <Info className="w-5 h-5 text-blue-600 shrink-0" />,
+            };
 
-          const borders = {
-            success: 'border-emerald-200 bg-emerald-50/90 text-emerald-950',
-            error: 'border-rose-200 bg-rose-50/90 text-rose-950',
-            warning: 'border-amber-200 bg-amber-50/90 text-amber-950',
-            info: 'border-blue-200 bg-blue-50/90 text-blue-950',
-          };
+            const borders = {
+              success: 'border-emerald-200/90 bg-emerald-50/95 text-emerald-950',
+              error: 'border-rose-200/90 bg-rose-50/95 text-rose-950',
+              warning: 'border-amber-200/90 bg-amber-50/95 text-amber-950',
+              info: 'border-blue-200/90 bg-blue-50/95 text-blue-950',
+            };
 
-          return (
-            <div
-              key={toast.id}
-              className={cn(
-                'pointer-events-auto flex items-start gap-3 rounded-xl border p-3.5 shadow-lg backdrop-blur-xs transition-all animate-in slide-in-from-bottom-2',
-                borders[toast.type],
-              )}
-            >
-              {icons[toast.type]}
-              <div className="flex-1 text-sm">
-                {toast.title && <p className="font-semibold">{toast.title}</p>}
-                <p className="text-xs sm:text-sm opacity-90 leading-relaxed">{toast.message}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => removeToast(toast.id)}
-                className="text-slate-400 hover:text-slate-600 rounded p-1 cursor-pointer"
-                aria-label="Đóng thông báo"
+            return (
+              <motion.div
+                key={toast.id}
+                initial={{ opacity: 0, y: 16, scale: 0.96 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.94 }}
+                transition={appleSpring}
+                className={cn(
+                  'pointer-events-auto flex items-start gap-3 rounded-2xl border p-3.5 shadow-xl backdrop-blur-md transition-all',
+                  borders[toast.type],
+                )}
               >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          );
-        })}
+                {icons[toast.type]}
+                <div className="flex-1 text-sm min-w-0">
+                  {toast.title && <p className="font-semibold text-xs sm:text-sm">{toast.title}</p>}
+                  <p className="text-xs sm:text-sm opacity-90 leading-relaxed break-words">{toast.message}</p>
+                </div>
+                <IconButton
+                  icon={<X className="w-3.5 h-3.5" />}
+                  aria-label="Đóng thông báo"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => removeToast(toast.id)}
+                  className="text-slate-400 hover:text-slate-700 -mr-1.5 -mt-1.5 sm:min-h-0 sm:min-w-0 sm:h-7 sm:w-7"
+                />
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
       </div>
     </ToastContext.Provider>
   );

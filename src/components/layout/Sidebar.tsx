@@ -1,5 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   BookOpen,
   LayoutDashboard,
@@ -18,7 +19,9 @@ import {
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { getRoleMeta } from '@/utils/formatters';
 import { Badge } from '@/components/ui/badge';
+import { IconButton } from '@/components/ui/icon-button';
 import { cn } from '@/utils/cn';
+import { appleSheetSpring, appleFade } from '@/utils/motion';
 
 export interface NavItem {
   label: string;
@@ -40,38 +43,38 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     switch (role) {
       case 'ADMIN':
         return [
-          { label: 'Tổng quan', to: '/admin/dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
-          { label: 'Lớp học', to: '/admin/classes', icon: <BookOpen className="w-4 h-4" /> },
-          { label: 'Người dùng', to: '/admin/users', icon: <Users className="w-4 h-4" /> },
-          { label: 'Buổi học', to: '/admin/sessions', icon: <Calendar className="w-4 h-4" /> },
-          { label: 'Quản lý tài liệu', to: '/teacher/documents', icon: <FolderOpen className="w-4 h-4" /> },
-          { label: 'Điểm danh', to: '/admin/attendance', icon: <ClipboardCheck className="w-4 h-4" /> },
-          { label: 'Học phí', to: '/admin/tuition', icon: <CreditCard className="w-4 h-4" /> },
-          { label: 'Bài tập', to: '/admin/assignments', icon: <FileText className="w-4 h-4" /> },
-          { label: 'Thông báo', to: '/admin/notifications', icon: <Bell className="w-4 h-4" /> },
+          { label: 'Tổng quan', to: '/admin/dashboard', icon: <LayoutDashboard className="w-4 h-4 shrink-0" /> },
+          { label: 'Lớp học', to: '/admin/classes', icon: <BookOpen className="w-4 h-4 shrink-0" /> },
+          { label: 'Người dùng', to: '/admin/users', icon: <Users className="w-4 h-4 shrink-0" /> },
+          { label: 'Buổi học', to: '/admin/sessions', icon: <Calendar className="w-4 h-4 shrink-0" /> },
+          { label: 'Quản lý tài liệu', to: '/teacher/documents', icon: <FolderOpen className="w-4 h-4 shrink-0" /> },
+          { label: 'Điểm danh', to: '/admin/attendance', icon: <ClipboardCheck className="w-4 h-4 shrink-0" /> },
+          { label: 'Học phí', to: '/admin/tuition', icon: <CreditCard className="w-4 h-4 shrink-0" /> },
+          { label: 'Bài tập', to: '/admin/assignments', icon: <FileText className="w-4 h-4 shrink-0" /> },
+          { label: 'Thông báo', to: '/admin/notifications', icon: <Bell className="w-4 h-4 shrink-0" /> },
         ];
       case 'TEACHER':
         return [
-          { label: 'Bàn làm việc', to: '/teacher/dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
-          { label: 'Lớp phụ trách', to: '/teacher/classes', icon: <BookOpen className="w-4 h-4" /> },
-          { label: 'Lịch giảng dạy', to: '/teacher/calendar', icon: <Calendar className="w-4 h-4" /> },
-          { label: 'Quản lý tài liệu', to: '/teacher/documents', icon: <FolderOpen className="w-4 h-4" /> },
-          { label: 'Điểm danh', to: '/teacher/attendance', icon: <ClipboardCheck className="w-4 h-4" /> },
-          { label: 'Chấm bài tập', to: '/teacher/assignments', icon: <FileText className="w-4 h-4" /> },
-          { label: 'Thông báo', to: '/teacher/notifications', icon: <Bell className="w-4 h-4" /> },
-          { label: 'Tài khoản Google', to: '/teacher/settings/google', icon: <Video className="w-4 h-4" /> },
+          { label: 'Bàn làm việc', to: '/teacher/dashboard', icon: <LayoutDashboard className="w-4 h-4 shrink-0" /> },
+          { label: 'Lớp phụ trách', to: '/teacher/classes', icon: <BookOpen className="w-4 h-4 shrink-0" /> },
+          { label: 'Lịch giảng dạy', to: '/teacher/calendar', icon: <Calendar className="w-4 h-4 shrink-0" /> },
+          { label: 'Quản lý tài liệu', to: '/teacher/documents', icon: <FolderOpen className="w-4 h-4 shrink-0" /> },
+          { label: 'Điểm danh', to: '/teacher/attendance', icon: <ClipboardCheck className="w-4 h-4 shrink-0" /> },
+          { label: 'Chấm bài tập', to: '/teacher/assignments', icon: <FileText className="w-4 h-4 shrink-0" /> },
+          { label: 'Thông báo', to: '/teacher/notifications', icon: <Bell className="w-4 h-4 shrink-0" /> },
+          { label: 'Tài khoản Google', to: '/teacher/settings/google', icon: <Video className="w-4 h-4 shrink-0" /> },
         ];
       case 'STUDENT':
       default:
         return [
-          { label: 'Góc học tập', to: '/student/dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
-          { label: 'Lớp học của tôi', to: '/student/classes', icon: <BookOpen className="w-4 h-4" /> },
-          { label: 'Lịch học', to: '/student/schedules', icon: <Calendar className="w-4 h-4" /> },
-          { label: 'Tài liệu học tập', to: '/student/documents', icon: <FolderOpen className="w-4 h-4" /> },
-          { label: 'Điểm danh của tôi', to: '/student/attendance', icon: <ClipboardCheck className="w-4 h-4" /> },
-          { label: 'Bài tập & Nộp bài', to: '/student/assignments', icon: <FileText className="w-4 h-4" /> },
-          { label: 'Học phí cá nhân', to: '/student/tuition', icon: <CreditCard className="w-4 h-4" /> },
-          { label: 'Thông báo', to: '/student/notifications', icon: <Bell className="w-4 h-4" /> },
+          { label: 'Góc học tập', to: '/student/dashboard', icon: <LayoutDashboard className="w-4 h-4 shrink-0" /> },
+          { label: 'Lớp học của tôi', to: '/student/classes', icon: <BookOpen className="w-4 h-4 shrink-0" /> },
+          { label: 'Lịch học', to: '/student/schedules', icon: <Calendar className="w-4 h-4 shrink-0" /> },
+          { label: 'Tài liệu học tập', to: '/student/documents', icon: <FolderOpen className="w-4 h-4 shrink-0" /> },
+          { label: 'Điểm danh của tôi', to: '/student/attendance', icon: <ClipboardCheck className="w-4 h-4 shrink-0" /> },
+          { label: 'Bài tập & Nộp bài', to: '/student/assignments', icon: <FileText className="w-4 h-4 shrink-0" /> },
+          { label: 'Học phí cá nhân', to: '/student/tuition', icon: <CreditCard className="w-4 h-4 shrink-0" /> },
+          { label: 'Thông báo', to: '/student/notifications', icon: <Bell className="w-4 h-4 shrink-0" /> },
         ];
     }
   };
@@ -81,7 +84,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const sidebarContent = (
     <div className="flex flex-col h-full bg-slate-900 text-slate-200">
       {/* Brand header */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800/80">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-600 text-white font-serif font-bold text-lg shadow-sm">
             V
@@ -98,18 +101,20 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </div>
         </div>
         {/* Close button on mobile */}
-        <button
-          type="button"
-          onClick={onClose}
-          className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer"
-          aria-label="Đóng thanh điều hướng"
-        >
-          <X className="w-5 h-5" />
-        </button>
+        <div className="lg:hidden">
+          <IconButton
+            icon={<X className="w-4 h-4" />}
+            aria-label="Đóng thanh điều hướng"
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            className="text-slate-400 hover:text-white hover:bg-slate-800"
+          />
+        </div>
       </div>
 
       {/* Navigation Links */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto" aria-label="Danh mục ứng dụng">
         <p className="px-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">
           Điều hướng chính
         </p>
@@ -122,21 +127,23 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             }}
             className={({ isActive }) =>
               cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors cursor-pointer',
+                'group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer',
                 isActive
-                  ? 'bg-amber-600/90 text-white shadow-sm'
+                  ? 'bg-amber-600/90 text-white shadow-xs font-semibold'
                   : 'text-slate-300 hover:bg-slate-800/80 hover:text-white',
               )
             }
           >
-            {item.icon}
-            <span>{item.label}</span>
+            <span className="transition-transform group-hover:scale-110">
+              {item.icon}
+            </span>
+            <span className="truncate">{item.label}</span>
           </NavLink>
         ))}
       </nav>
 
       {/* User footer */}
-      <div className="p-3 border-t border-slate-800 bg-slate-950/40">
+      <div className="p-3 border-t border-slate-800/80 bg-slate-950/40">
         <NavLink
           to="/profile"
           onClick={() => {
@@ -167,7 +174,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         <button
           type="button"
           onClick={() => logout()}
-          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-rose-400 hover:bg-rose-950/30 hover:text-rose-300 transition-colors cursor-pointer text-left"
+          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-rose-400 hover:bg-rose-950/30 hover:text-rose-300 transition-colors cursor-pointer text-left"
         >
           <LogOut className="w-4 h-4 shrink-0" />
           <span>Đăng xuất</span>
@@ -183,19 +190,31 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         {sidebarContent}
       </aside>
 
-      {/* Mobile drawer */}
-      {isOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 flex">
-          <div
-            className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
-            onClick={onClose}
-            aria-hidden="true"
-          />
-          <div className="relative flex-1 flex flex-col max-w-xs w-full shadow-2xl">
-            {sidebarContent}
+      {/* Mobile drawer with Apple-style spring slide-in */}
+      <AnimatePresence>
+        {isOpen && (
+          <div className="lg:hidden fixed inset-0 z-50 flex">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={appleFade}
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs cursor-pointer"
+              onClick={onClose}
+              aria-hidden="true"
+            />
+            <motion.div
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={appleSheetSpring}
+              className="relative flex-1 flex flex-col max-w-xs w-full shadow-2xl z-10"
+            >
+              {sidebarContent}
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </>
   );
 }

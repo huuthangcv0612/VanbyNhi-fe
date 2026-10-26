@@ -351,8 +351,10 @@ export function StudentDocumentsPage() {
                       size="sm"
                       onClick={() => handleOpenPreview(m)}
                       leftIcon={<Eye className="w-3.5 h-3.5" />}
+                      aria-label={`Xem tài liệu ${m.title}`}
                     >
-                      Xem tài liệu
+                      <span className="hidden sm:inline">Xem tài liệu</span>
+                      <span className="sm:hidden">Xem</span>
                     </Button>
                     <Button
                       variant="primary"
@@ -360,8 +362,10 @@ export function StudentDocumentsPage() {
                       isLoading={downloadingMaterialId === m.id}
                       onClick={() => handleDirectDownload(m)}
                       leftIcon={<Download className="w-3.5 h-3.5" />}
+                      aria-label={`Tải xuống tài liệu ${m.title}`}
                     >
-                      Tải xuống
+                      <span className="hidden sm:inline">Tải xuống</span>
+                      <span className="sm:hidden">Tải</span>
                     </Button>
                   </div>
                 </div>

@@ -78,7 +78,7 @@ export function CalendarToolbar({
             </button>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 sm:ml-1.5">
             <h2 className="text-lg sm:text-xl font-bold tracking-tight text-slate-900 font-serif">
               {title}
             </h2>

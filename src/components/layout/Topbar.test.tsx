@@ -20,7 +20,7 @@ describe('Topbar Header Component', () => {
     vi.clearAllMocks();
   });
 
-  it('renders "Quản lý tài liệu" button for TEACHER role and navigates to /teacher/documents', async () => {
+  it('renders notification button and navigates to /teacher/notifications for TEACHER role', async () => {
     vi.spyOn(authHook, 'useAuth').mockReturnValue({
       user: {
         id: 't-1',
@@ -47,15 +47,14 @@ describe('Topbar Header Component', () => {
       </MemoryRouter>,
     );
 
-    const docBtn = screen.getByRole('button', { name: /Quản lý tài liệu/i });
-    expect(docBtn).toBeInTheDocument();
-    expect(screen.getByText('Quản lý tài liệu')).toBeInTheDocument();
+    const notifBtn = screen.getByRole('button', { name: /Xem thông báo/i });
+    expect(notifBtn).toBeInTheDocument();
 
-    await userEvent.click(docBtn);
-    expect(mockNavigate).toHaveBeenCalledWith('/teacher/documents');
+    await userEvent.click(notifBtn);
+    expect(mockNavigate).toHaveBeenCalledWith('/teacher/notifications');
   });
 
-  it('renders "Tài liệu học tập" button for STUDENT role and navigates to /student/documents', async () => {
+  it('renders mobile brand logo linking to dashboard', async () => {
     vi.spyOn(authHook, 'useAuth').mockReturnValue({
       user: {
         id: 's-1',
@@ -78,15 +77,12 @@ describe('Topbar Header Component', () => {
 
     render(
       <MemoryRouter initialEntries={['/student/dashboard']}>
-        <Topbar onOpenSidebar={vi.fn()} />
+        <Topbar />
       </MemoryRouter>,
     );
 
-    const docBtn = screen.getByRole('button', { name: /Tài liệu học tập/i });
-    expect(docBtn).toBeInTheDocument();
-    expect(screen.getByText('Tài liệu học tập')).toBeInTheDocument();
-
-    await userEvent.click(docBtn);
-    expect(mockNavigate).toHaveBeenCalledWith('/student/documents');
+    const brandLink = screen.getByRole('link', { name: /Về trang chủ/i });
+    expect(brandLink).toBeInTheDocument();
+    expect(brandLink).toHaveAttribute('href', '/student/dashboard');
   });
 });

@@ -200,7 +200,7 @@ export function TeacherAssignedMaterialsView() {
               >
                 {classes.map((cls) => (
                   <option key={cls.id} value={cls.id}>
-                    {cls.name} {cls.classCode ? `(${cls.classCode})` : ''}
+                    {cls.name}
                   </option>
                 ))}
               </select>

@@ -1,6 +1,9 @@
 import React, { useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { X } from 'lucide-react';
 import { cn } from '@/utils/cn';
+import { appleSpring, appleFade } from '@/utils/motion';
+import { IconButton } from './icon-button';
 
 export interface ModalProps {
   isOpen: boolean;
@@ -9,7 +12,8 @@ export interface ModalProps {
   description?: string;
   children: React.ReactNode;
   footer?: React.ReactNode;
-  maxWidth?: 'sm' | 'md' | 'lg' | 'xl';
+  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+  className?: string;
 }
 
 export function Modal({
@@ -20,6 +24,7 @@ export function Modal({
   children,
   footer,
   maxWidth = 'md',
+  className,
 }: ModalProps) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -37,66 +42,82 @@ export function Modal({
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
-
   const maxWidthStyles = {
     sm: 'max-w-sm',
     md: 'max-w-md',
     lg: 'max-w-lg',
     xl: 'max-w-xl',
+    '2xl': 'max-w-2xl',
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="modal-title"
-    >
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs transition-opacity"
-        onClick={onClose}
-        aria-hidden="true"
-      />
-
-      {/* Modal Dialog */}
-      <div
-        className={cn(
-          'relative w-full rounded-2xl bg-white p-6 text-left shadow-xl transition-all border border-slate-200 z-10',
-          maxWidthStyles[maxWidth],
-        )}
-      >
-        <div className="flex items-start justify-between pb-3">
-          <div>
-            <h3
-              id="modal-title"
-              className="text-lg font-semibold leading-6 text-slate-900"
-            >
-              {title}
-            </h3>
-            {description && (
-              <p className="mt-1 text-sm text-slate-500">{description}</p>
-            )}
-          </div>
-          <button
-            type="button"
+    <AnimatePresence>
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-title"
+        >
+          {/* Frosted Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={appleFade}
+            className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs cursor-pointer"
             onClick={onClose}
-            className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer"
-            aria-label="Đóng"
+            aria-hidden="true"
+          />
+
+          {/* Modal Dialog Card (Apple squircle, spring entrance) */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 12 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 12 }}
+            transition={appleSpring}
+            className={cn(
+              'relative w-full rounded-2xl sm:rounded-3xl bg-white p-5 sm:p-6 text-left shadow-2xl border border-slate-200/90 z-10 my-auto',
+              maxWidthStyles[maxWidth],
+              className,
+            )}
           >
-            <X className="w-5 h-5" />
-          </button>
+            <div className="flex items-start justify-between gap-3 pb-3 border-b border-slate-100">
+              <div className="pr-2">
+                <h3
+                  id="modal-title"
+                  className="text-base sm:text-lg font-bold leading-6 text-slate-900 font-serif"
+                >
+                  {title}
+                </h3>
+                {description && (
+                  <p className="mt-1 text-xs sm:text-sm text-slate-500 leading-relaxed">
+                    {description}
+                  </p>
+                )}
+              </div>
+              <IconButton
+                icon={<X className="w-4 h-4" />}
+                aria-label="Đóng"
+                variant="ghost"
+                size="sm"
+                onClick={onClose}
+                className="text-slate-400 hover:text-slate-700 hover:bg-slate-100 -mr-1 -mt-1"
+              />
+            </div>
+
+            <div className="mt-4 max-h-[calc(85vh-140px)] overflow-y-auto pr-1">
+              {children}
+            </div>
+
+            {footer && (
+              <div className="mt-6 flex flex-wrap items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+                {footer}
+              </div>
+            )}
+          </motion.div>
         </div>
-
-        <div className="mt-3">{children}</div>
-
-        {footer && (
-          <div className="mt-6 flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
-            {footer}
-          </div>
-        )}
-      </div>
-    </div>
+      )}
+    </AnimatePresence>
   );
 }
