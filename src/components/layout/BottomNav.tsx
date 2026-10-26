@@ -17,6 +17,8 @@ export interface BottomNavProps {
   onOpenMenu: () => void;
 }
 
+const MotionNavLink = motion.create(NavLink);
+
 export function BottomNav({ onOpenMenu }: BottomNavProps) {
   const { user } = useAuth();
   const location = useLocation();
@@ -54,41 +56,49 @@ export function BottomNav({ onOpenMenu }: BottomNavProps) {
   return (
     <nav
       aria-label="Điều hướng nhanh trên thiết bị di động"
-      className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white/90 backdrop-blur-lg border-t border-slate-200/80 px-2 py-1.5 shadow-[0_-4px_16px_rgba(0,0,0,0.03)]"
+      className="lg:hidden fixed bottom-3.5 sm:bottom-5 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-1.75rem)] max-w-sm sm:max-w-md"
     >
-      <div className="flex items-center justify-around max-w-lg mx-auto">
+      {/* Floating water bubble pill container */}
+      <div className="relative flex items-center justify-between p-1.5 rounded-full bg-white/85 backdrop-blur-2xl border border-white/80 shadow-[0_12px_36px_-6px_rgba(0,0,0,0.14),0_4px_16px_rgba(0,0,0,0.06)] ring-1 ring-black/5">
         {navItems.map((item) => {
           const isActive = location.pathname.startsWith(item.to);
           const IconComponent = item.icon;
 
           return (
-            <NavLink
+            <MotionNavLink
               key={item.to}
               to={item.to}
               aria-label={item.label}
+              whileTap={{ scale: 0.92 }}
+              transition={appleSnappy}
               className={({ isActive: linkActive }) =>
                 cn(
-                  'relative flex flex-col items-center justify-center min-w-[56px] min-h-[48px] py-1 px-2 rounded-xl transition-colors cursor-pointer select-none text-center',
+                  'relative z-10 flex flex-col items-center justify-center min-w-[54px] min-h-[46px] py-1 px-2.5 rounded-full transition-colors cursor-pointer select-none text-center',
                   linkActive || isActive
                     ? 'text-amber-800 font-semibold'
-                    : 'text-slate-500 hover:text-slate-800',
+                    : 'text-slate-600 hover:text-slate-900',
                 )
               }
             >
-              <div className="relative flex items-center justify-center">
-                <IconComponent className="w-5 h-5 shrink-0" />
-                {(isActive || location.pathname === item.to) && (
-                  <motion.div
-                    layoutId="bottomNavIndicator"
-                    transition={appleSnappy}
-                    className="absolute -bottom-1 w-1.5 h-1.5 rounded-full bg-amber-700"
-                  />
+              {/* Active water bubble indicator */}
+              {(isActive || location.pathname === item.to) && (
+                <motion.div
+                  layoutId="waterBubblePill"
+                  className="absolute inset-0 rounded-full bg-slate-200/75 -z-10 shadow-2xs"
+                  transition={appleSnappy}
+                />
+              )}
+
+              <IconComponent
+                className={cn(
+                  'w-5 h-5 shrink-0 transition-transform duration-200',
+                  (isActive || location.pathname === item.to) && 'scale-105',
                 )}
-              </div>
-              <span className="text-[10px] mt-1 leading-tight tracking-tight truncate max-w-[64px]">
+              />
+              <span className="text-[10px] sm:text-[11px] mt-0.5 leading-none tracking-tight truncate max-w-[62px]">
                 {item.label}
               </span>
-            </NavLink>
+            </MotionNavLink>
           );
         })}
 
@@ -99,10 +109,12 @@ export function BottomNav({ onOpenMenu }: BottomNavProps) {
           whileTap={{ scale: 0.92 }}
           transition={appleSnappy}
           aria-label="Mở toàn bộ danh mục menu"
-          className="relative flex flex-col items-center justify-center min-w-[56px] min-h-[48px] py-1 px-2 rounded-xl text-slate-500 hover:text-slate-800 transition-colors cursor-pointer select-none"
+          className="relative z-10 flex flex-col items-center justify-center min-w-[54px] min-h-[46px] py-1 px-2.5 rounded-full text-slate-600 hover:text-slate-900 transition-colors cursor-pointer select-none"
         >
           <Menu className="w-5 h-5 shrink-0" />
-          <span className="text-[10px] mt-1 leading-tight tracking-tight">Thêm</span>
+          <span className="text-[10px] sm:text-[11px] mt-0.5 leading-none tracking-tight">
+            Thêm
+          </span>
         </motion.button>
       </div>
     </nav>
