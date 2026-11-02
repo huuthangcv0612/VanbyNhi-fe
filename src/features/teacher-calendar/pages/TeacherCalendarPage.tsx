@@ -232,6 +232,7 @@ export function TeacherCalendarPage() {
           ) : (
             <WeekView
               currentDate={currentDate}
+              onDateChange={setCurrentDate}
               events={filteredEvents}
               onSelectEvent={handleSelectEvent}
               onCreateEventOnDateTime={handleCreateOnDateTime}

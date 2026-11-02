@@ -8,6 +8,7 @@ import {
   toVietnamIsoString,
   isValidHexColor,
   formatTimeVN,
+  formatSelectedDayTitleVN,
 } from './date-utils';
 import { layoutDayEvents } from './calendar-layout';
 import type { CalendarEvent } from '../types/teacher-calendar.types';
@@ -59,6 +60,12 @@ describe('date-utils', () => {
   it('formats time in Vietnam timezone', () => {
     const timeStr = formatTimeVN('2026-10-12T08:30:00+07:00');
     expect(timeStr).toBe('08:30');
+  });
+
+  it('formats selected day title accurately in Vietnamese', () => {
+    // 2026-11-02 is a Monday
+    const date = new Date(2026, 10, 2);
+    expect(formatSelectedDayTitleVN(date)).toBe('Thứ Hai – 2 thg 11, 2026');
   });
 });
 

@@ -102,4 +102,77 @@ describe('WeekView - 24 hours display (00:00 to 24:00)', () => {
     await user.click(screen.getByText('Ca sáng sớm 00:00'));
     expect(onSelectEvent).toHaveBeenCalledWith(events[0]);
   });
+
+  it('switches day when clicking on a day in the 7-day strip', async () => {
+    const user = userEvent.setup();
+    const onDateChange = vi.fn();
+    const events: CalendarEvent[] = [
+      {
+        id: 'ev-tue',
+        title: 'Ca Thứ Ba',
+        startAt: '2026-10-27T09:00:00+07:00',
+        endAt: '2026-10-27T10:30:00+07:00',
+      },
+      {
+        id: 'ev-wed',
+        title: 'Ca Thứ Tư',
+        startAt: '2026-10-28T14:00:00+07:00',
+        endAt: '2026-10-28T15:30:00+07:00',
+      },
+    ];
+
+    render(
+      <WeekView
+        currentDate={mockCurrentDate}
+        onDateChange={onDateChange}
+        events={events}
+        onSelectEvent={onSelectEvent}
+        onCreateEventOnDateTime={onCreateEventOnDateTime}
+      />,
+    );
+
+    // Initial selected date is Tuesday Oct 27
+    expect(screen.getByText('Ca Thứ Ba')).toBeInTheDocument();
+    expect(screen.queryByText('Ca Thứ Tư')).not.toBeInTheDocument();
+    expect(screen.getByText('Thứ Ba – 27 thg 10, 2026')).toBeInTheDocument();
+
+    // Click Wednesday (Oct 28)
+    const wedButton = screen.getByRole('button', {
+      name: /Thứ Tư, ngày 28/i,
+    });
+    await user.click(wedButton);
+
+    // Now Wednesday is active
+    expect(onDateChange).toHaveBeenCalled();
+    expect(screen.getByText('Thứ Tư – 28 thg 10, 2026')).toBeInTheDocument();
+    expect(screen.getByText('Ca Thứ Tư')).toBeInTheDocument();
+    expect(screen.queryByText('Ca Thứ Ba')).not.toBeInTheDocument();
+  });
+
+  it('navigates days with previous and next day chevron buttons', async () => {
+    const user = userEvent.setup();
+    const onDateChange = vi.fn();
+
+    render(
+      <WeekView
+        currentDate={mockCurrentDate}
+        onDateChange={onDateChange}
+        events={[]}
+        onSelectEvent={onSelectEvent}
+        onCreateEventOnDateTime={onCreateEventOnDateTime}
+      />,
+    );
+
+    expect(screen.getByText('Thứ Ba – 27 thg 10, 2026')).toBeInTheDocument();
+
+    // Click next day button
+    const nextBtn = screen.getByRole('button', { name: 'Xem ngày kế tiếp' });
+    await user.click(nextBtn);
+    expect(screen.getByText('Thứ Tư – 28 thg 10, 2026')).toBeInTheDocument();
+
+    // Click prev day button
+    const prevBtn = screen.getByRole('button', { name: 'Xem ngày trước' });
+    await user.click(prevBtn);
+    expect(screen.getByText('Thứ Ba – 27 thg 10, 2026')).toBeInTheDocument();
+  });
 });

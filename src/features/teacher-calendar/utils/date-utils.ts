@@ -231,3 +231,15 @@ export const WEEKDAY_NAMES_FULL = [
   'Thứ Bảy',
   'Chủ Nhật',
 ];
+
+/**
+ * Tiêu đề ngày được chọn theo định dạng: Thứ Hai – 2 thg 11, 2026
+ */
+export function formatSelectedDayTitleVN(date: Date): string {
+  const weekdayIdx = (date.getDay() + 6) % 7;
+  const weekdayName = WEEKDAY_NAMES_FULL[weekdayIdx];
+  const day = date.getDate();
+  const month = date.getMonth() + 1;
+  const year = date.getFullYear();
+  return `${weekdayName} – ${day} thg ${month}, ${year}`;
+}
