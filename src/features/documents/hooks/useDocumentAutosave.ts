@@ -9,14 +9,15 @@ export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error' | 'conflict' | 'o
 export interface UseDocumentAutosaveOptions {
   documentId: string;
   initialRevision: number;
-  initialContent?: Record<string, any>;
+  initialContent?: Record<string, unknown>;
   debounceMs?: number;
+  enabled?: boolean;
   onRevisionUpdate?: (newRevision: number) => void;
   onSaveSuccess?: (revision: number, updatedAt: string) => void;
 }
 
 interface LocalDraft {
-  content: Record<string, any>;
+  content: Record<string, unknown>;
   revision: number;
   timestamp: string;
 }
@@ -26,6 +27,7 @@ export function useDocumentAutosave({
   initialRevision,
   initialContent,
   debounceMs = 1000,
+  enabled = true,
   onRevisionUpdate,
   onSaveSuccess,
 }: UseDocumentAutosaveOptions) {
@@ -43,10 +45,11 @@ export function useDocumentAutosave({
   // References to handle serialization and pending updates
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isSavingRef = useRef(false);
-  const pendingContentRef = useRef<{ content: Record<string, any>; reason?: string } | null>(null);
-  const latestContentRef = useRef<Record<string, any> | null>(initialContent || null);
+  const pendingContentRef = useRef<{ content: Record<string, unknown>; reason?: string } | null>(null);
+  const latestContentRef = useRef<Record<string, unknown> | null>(initialContent || null);
   const revisionRef = useRef<number>(initialRevision);
   revisionRef.current = currentRevision;
+  const requestIdRef = useRef<number>(0);
 
   // Synchronize revision and initial content when props change and not dirty
   const prevInitialRevisionRef = useRef(initialRevision);
@@ -123,7 +126,11 @@ export function useDocumentAutosave({
 
   // Execute OCC Content Save sequentially
   const executeSave = useCallback(
-    async (content: Record<string, any>, versionReason?: string) => {
+    async (content: Record<string, unknown>, versionReason?: string) => {
+      if (!enabled || !documentId || !content || typeof content !== 'object' || content.type !== 'doc') {
+        return;
+      }
+
       if (!navigator.onLine) {
         setSaveStatus('offline');
         return;
@@ -134,6 +141,8 @@ export function useDocumentAutosave({
       setErrorMessage(null);
 
       const expectedRevision = revisionRef.current;
+      const currentRequestId = ++requestIdRef.current;
+      let hasConflict = false;
 
       try {
         const res = await teacherDocumentsService.updateContent(documentId, {
@@ -142,7 +151,12 @@ export function useDocumentAutosave({
           versionReason,
         });
 
-        // Save succeeded
+        // Bỏ qua nếu có request mới hơn được phát đi
+        if (currentRequestId !== requestIdRef.current) {
+          return;
+        }
+
+        // Save succeeded - chỉ báo thành công sau khi backend xác nhận
         const newRevision = res.revision;
         setCurrentRevision(newRevision);
         revisionRef.current = newRevision;
@@ -162,8 +176,13 @@ export function useDocumentAutosave({
           // Ignore
         }
       } catch (err: unknown) {
+        if (currentRequestId !== requestIdRef.current) {
+          return;
+        }
+
         if (axios.isAxiosError(err) && (err.response?.status === 409 || err.response?.data?.errorCode === 'REVISION_CONFLICT')) {
           // REVISION_CONFLICT: Do NOT overwrite user work
+          hasConflict = true;
           const errData = err.response?.data as {
             currentRevision?: number;
             expectedRevision?: number;
@@ -189,18 +208,22 @@ export function useDocumentAutosave({
           const next = pendingContentRef.current;
           pendingContentRef.current = null;
           // Only proceed if not in conflict state
-          if (saveStatus !== 'conflict') {
+          if (!hasConflict) {
             void executeSave(next.content, next.reason);
           }
         }
       }
     },
-    [documentId, draftKey, onRevisionUpdate, onSaveSuccess, saveStatus],
+    [documentId, draftKey, enabled, onRevisionUpdate, onSaveSuccess],
   );
 
   // Debounced trigger
   const triggerSave = useCallback(
-    (content: Record<string, any>, reason?: string) => {
+    (content: Record<string, unknown>, reason?: string) => {
+      if (!enabled || !documentId || !content || typeof content !== 'object' || content.type !== 'doc') {
+        return;
+      }
+
       latestContentRef.current = content;
       setIsDirty(true);
 
@@ -231,18 +254,24 @@ export function useDocumentAutosave({
         }
       }, debounceMs);
     },
-    [debounceMs, draftKey, executeSave],
+    [debounceMs, documentId, draftKey, enabled, executeSave],
   );
 
   // Immediate save without waiting for debounce
   const saveImmediate = useCallback(
-    async (reason?: string, fallbackContent?: Record<string, any>) => {
+    async (reason?: string, fallbackContent?: Record<string, unknown>) => {
+      if (!enabled || !documentId) {
+        return;
+      }
+
       if (timerRef.current) {
         clearTimeout(timerRef.current);
         timerRef.current = null;
       }
       const targetContent = latestContentRef.current || fallbackContent;
-      if (!targetContent) return;
+      if (!targetContent || typeof targetContent !== 'object' || targetContent.type !== 'doc') {
+        return;
+      }
       latestContentRef.current = targetContent;
 
       if (isSavingRef.current) {
@@ -251,7 +280,7 @@ export function useDocumentAutosave({
         await executeSave(targetContent, reason);
       }
     },
-    [executeSave],
+    [enabled, documentId, executeSave],
   );
 
   // Conflict resolution helpers

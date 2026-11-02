@@ -1,4 +1,4 @@
-import { useEffect, useImperativeHandle, forwardRef } from 'react';
+import { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import { StarterKit } from '@tiptap/starter-kit';
 import { Underline } from '@tiptap/extension-underline';
@@ -38,6 +38,9 @@ export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>
     { initialContent, onUpdate, editable = true, className = '' },
     ref,
   ) {
+    const isUserEditedRef = useRef(false);
+    const isInternalUpdatingRef = useRef(false);
+
     const editor = useEditor({
       immediatelyRender: false,
       editable,
@@ -75,12 +78,31 @@ export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>
         TableCell,
       ],
       onUpdate: ({ editor: currentEditor }) => {
+        // Ngăn onUpdate / autosave trong lúc nạp nội dung từ server hoặc setJSON
+        if (isInternalUpdatingRef.current) return;
+        isUserEditedRef.current = true;
         if (onUpdate) {
           const json = currentEditor.getJSON();
           onUpdate(json);
         }
       },
     });
+
+    // Đồng bộ an toàn nếu initialContent được truyền/cập nhật sau khi mount
+    // nhưng CHỈ KHI người dùng chưa bắt đầu chỉnh sửa nhằm bảo vệ nội dung đang nhập
+    useEffect(() => {
+      if (editor && initialContent && !editor.isDestroyed) {
+        if (isUserEditedRef.current) return;
+        const currentJson = editor.getJSON();
+        if (JSON.stringify(currentJson) !== JSON.stringify(initialContent)) {
+          isInternalUpdatingRef.current = true;
+          editor.commands.setContent(initialContent, { emitUpdate: false });
+          setTimeout(() => {
+            isInternalUpdatingRef.current = false;
+          }, 0);
+        }
+      }
+    }, [editor, initialContent]);
 
     // Expose methods via ref for parent control (e.g. restore from version or local draft)
     useImperativeHandle(
@@ -89,7 +111,11 @@ export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>
         getJSON: () => editor?.getJSON() || DEFAULT_DOC_CONTENT,
         setJSON: (newContent: Record<string, any>) => {
           if (editor) {
+            isInternalUpdatingRef.current = true;
             editor.commands.setContent(newContent, { emitUpdate: false });
+            setTimeout(() => {
+              isInternalUpdatingRef.current = false;
+            }, 0);
           }
         },
         getText: () => editor?.getText() || '',

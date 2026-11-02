@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -28,6 +28,17 @@ import { VersionHistoryDrawer } from '../components/editor/VersionHistoryDrawer'
 import { ExportModal } from '../components/editor/ExportModal';
 import { ConflictResolutionModal } from '../components/editor/ConflictResolutionModal';
 
+function isValidTiptapDoc(content: unknown): content is Record<string, unknown> {
+  return (
+    typeof content === 'object' &&
+    content !== null &&
+    'type' in content &&
+    (content as Record<string, unknown>).type === 'doc' &&
+    'content' in content &&
+    Array.isArray((content as Record<string, unknown>).content)
+  );
+}
+
 export function DocumentEditorPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -45,6 +56,7 @@ export function DocumentEditorPage() {
 
   // New Document Setup State
   const [newTitle, setNewTitle] = useState('Tài liệu mới');
+  const [editedTitle, setEditedTitle] = useState<string | null>(null);
   const newStatus: DocumentStatus = 'DRAFT';
 
   // Drawer / Modals State
@@ -65,13 +77,8 @@ export function DocumentEditorPage() {
     staleTime: 0, // Always get fresh revision from server on mount
   });
 
-  const [document, setDocument] = useState<DocumentEntity | null>(null);
-
-  useEffect(() => {
-    if (documentData) {
-      setDocument(documentData);
-    }
-  }, [documentData]);
+  const isDocContentValid = isValidTiptapDoc(documentData?.content);
+  const isAutosaveEnabled = !isNew && Boolean(id) && isDocContentValid;
 
   // 2. Setup OCC Autosave hook
   const {
@@ -91,13 +98,18 @@ export function DocumentEditorPage() {
   } = useDocumentAutosave({
     documentId: id || '',
     initialRevision: documentData?.revision ?? 1,
-    initialContent: (documentData?.content as Record<string, any>) || undefined,
+    initialContent: isDocContentValid ? (documentData!.content as Record<string, unknown>) : undefined,
     debounceMs: 1000,
+    enabled: isAutosaveEnabled,
     onRevisionUpdate: (newRev) => {
-      setDocument((prev) => (prev ? { ...prev, revision: newRev } : null));
+      queryClient.setQueryData<DocumentEntity>(['document-detail', id], (old) =>
+        old ? { ...old, revision: newRev } : old,
+      );
     },
-    onSaveSuccess: (_newRev, updatedAt) => {
-      setDocument((prev) => (prev ? { ...prev, updatedAt } : null));
+    onSaveSuccess: (newRev, updatedAt) => {
+      queryClient.setQueryData<DocumentEntity>(['document-detail', id], (old) =>
+        old ? { ...old, revision: newRev, updatedAt } : old,
+      );
     },
   });
 
@@ -128,15 +140,16 @@ export function DocumentEditorPage() {
     mutationFn: (dto: { title?: string; status?: DocumentStatus }) =>
       teacherDocumentsService.updateDocument(id!, dto),
     onSuccess: (data) => {
-      setDocument((prev) =>
-        prev
+      queryClient.setQueryData<DocumentEntity>(['document-detail', id], (old) =>
+        old
           ? {
-              ...prev,
+              ...old,
               title: data.document.title,
-              status: (data.document.status as DocumentStatus) || prev.status,
+              status: (data.document.status as DocumentStatus) || old.status,
             }
-          : null,
+          : old,
       );
+      setEditedTitle(null);
       success('Cập nhật thông tin thành công');
       queryClient.invalidateQueries({ queryKey: ['teacher-documents'] });
     },
@@ -146,8 +159,8 @@ export function DocumentEditorPage() {
   });
 
   // Handle Editor Content Change
-  const handleEditorUpdate = (content: Record<string, any>) => {
-    if (!isNew && id) {
+  const handleEditorUpdate = (content: Record<string, unknown>) => {
+    if (!isNew && id && isAutosaveEnabled) {
       triggerSave(content);
     }
   };
@@ -167,7 +180,7 @@ export function DocumentEditorPage() {
   const handleReloadServer = async () => {
     try {
       const freshDoc = await teacherDocumentsService.getDocument(id!);
-      setDocument(freshDoc);
+      queryClient.setQueryData(['document-detail', id], freshDoc);
       if (freshDoc.content && editorRef.current) {
         editorRef.current.setJSON(freshDoc.content);
       }
@@ -195,6 +208,7 @@ export function DocumentEditorPage() {
     navigate(backPath);
   };
 
+  // ===== CÁC TRẠNG THÁI LOADING / LỖI ĐỘC LẬP CHO TÀI LIỆU CŨ =====
   if (!isNew && isLoading) {
     return (
       <div className="min-h-screen bg-slate-100 flex flex-col">
@@ -214,12 +228,13 @@ export function DocumentEditorPage() {
     );
   }
 
-  if (!isNew && isError) {
+  // 1. Lỗi API hoặc không tìm thấy tài liệu
+  if (!isNew && (isError || !documentData)) {
     return (
       <div className="p-8 max-w-2xl mx-auto">
         <ErrorState
           title="Không thể tải nội dung tài liệu"
-          message={getApiErrorMessage(error)}
+          message={getApiErrorMessage(error) || 'Tài liệu không tồn tại hoặc bạn không có quyền truy cập.'}
           onRetry={() => refetch()}
         />
         <div className="mt-4 text-center">
@@ -230,6 +245,44 @@ export function DocumentEditorPage() {
       </div>
     );
   }
+
+  // 2. Nội dung tài liệu là null (lỗi đọc R2 hoặc chưa có file nội dung)
+  if (!isNew && documentData && documentData.content == null) {
+    return (
+      <div className="p-8 max-w-2xl mx-auto">
+        <ErrorState
+          title="Không thể tải nội dung văn bản"
+          message="Tài liệu này chưa có nội dung hoặc không thể tải nội dung từ hệ thống lưu trữ Cloudflare R2. Để bảo vệ dữ liệu gốc và tránh ghi đè nội dung rỗng, chức năng chỉnh sửa đã bị khóa."
+          onRetry={() => refetch()}
+        />
+        <div className="mt-4 text-center">
+          <Button variant="outline" onClick={() => navigate(backPath)}>
+            Quay lại thư viện
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // 3. Nội dung tài liệu không đúng định dạng Tiptap JSON schema
+  if (!isNew && documentData && !isDocContentValid) {
+    return (
+      <div className="p-8 max-w-2xl mx-auto">
+        <ErrorState
+          title="Định dạng dữ liệu không hợp lệ"
+          message="Nội dung tài liệu không tuân thủ cấu trúc Tiptap JSON schema chuẩn (phải có type là 'doc' và mảng 'content'). Chức năng chỉnh sửa tạm dừng để tránh làm hỏng tệp."
+          onRetry={() => refetch()}
+        />
+        <div className="mt-4 text-center">
+          <Button variant="outline" onClick={() => navigate(backPath)}>
+            Quay lại thư viện
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const documentTitle = editedTitle ?? documentData?.title ?? '';
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-100 text-slate-800">
@@ -259,11 +312,14 @@ export function DocumentEditorPage() {
               <div className="flex items-center gap-2 min-w-0">
                 <input
                   type="text"
-                  defaultValue={document?.title || ''}
-                  onBlur={(e) => {
-                    const val = e.target.value.trim();
-                    if (val && val !== document?.title) {
+                  value={documentTitle}
+                  onChange={(e) => setEditedTitle(e.target.value)}
+                  onBlur={() => {
+                    const val = (editedTitle ?? '').trim();
+                    if (val && val !== documentData?.title) {
                       updateMetadataMutation.mutate({ title: val });
+                    } else {
+                      setEditedTitle(null);
                     }
                   }}
                   onKeyDown={(e) => {
@@ -274,9 +330,6 @@ export function DocumentEditorPage() {
                   className="font-bold text-slate-900 text-sm sm:text-base hover:bg-slate-50 focus:bg-white px-2 py-1 rounded-lg border border-transparent hover:border-slate-300 focus:border-amber-500 focus:outline-none transition-all truncate max-w-sm sm:max-w-md"
                   title="Nhấp để sửa tiêu đề (Enter để lưu)"
                 />
-                <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 shrink-0">
-                  rev {currentRevision}
-                </span>
               </div>
             )}
           </div>
@@ -367,10 +420,12 @@ export function DocumentEditorPage() {
                 variant="primary"
                 size="sm"
                 onClick={() => {
-                  const json = editorRef.current?.getJSON() || (document?.content as Record<string, any>);
-                  void saveImmediate('Lưu mốc thủ công', json);
+                  const json = editorRef.current?.getJSON() || (documentData?.content as Record<string, unknown>);
+                  if (json && isValidTiptapDoc(json)) {
+                    void saveImmediate('Lưu mốc thủ công', json);
+                  }
                 }}
-                disabled={saveStatus === 'saving'}
+                disabled={saveStatus === 'saving' || !isAutosaveEnabled}
                 leftIcon={<Save className="w-4 h-4" />}
                 className="bg-amber-700 hover:bg-amber-800 text-white text-xs"
               >
@@ -414,11 +469,12 @@ export function DocumentEditorPage() {
         </div>
       )}
 
-      {/* Main Document Paper Workspace */}
+      {/* Main Document Paper Workspace: Chỉ mount khi đã có initialContent hợp lệ */}
       <main className="flex-1 flex flex-col">
         <DocumentEditor
+          key={id || 'new'}
           ref={editorRef}
-          initialContent={document?.content}
+          initialContent={isNew ? null : (documentData!.content as Record<string, unknown>)}
           onUpdate={handleEditorUpdate}
           editable={true}
         />
@@ -433,7 +489,7 @@ export function DocumentEditorPage() {
             documentId={id}
             currentRevision={currentRevision}
             onRestoreSuccess={(newDoc, newRev) => {
-              setDocument(newDoc);
+              queryClient.setQueryData(['document-detail', id], newDoc);
               if (newDoc.content && editorRef.current) {
                 editorRef.current.setJSON(newDoc.content);
               }
@@ -446,7 +502,7 @@ export function DocumentEditorPage() {
             isOpen={isExportModalOpen}
             onClose={() => setIsExportModalOpen(false)}
             documentId={id}
-            documentTitle={document?.title || 'Tài liệu'}
+            documentTitle={documentData?.title || 'Tài liệu'}
             currentRevision={currentRevision}
           />
 

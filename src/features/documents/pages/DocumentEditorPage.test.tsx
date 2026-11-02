@@ -84,8 +84,8 @@ describe('DocumentEditorPage', () => {
 
     await waitFor(() => {
       expect(screen.getByDisplayValue('Giáo án Chiếc thuyền ngoài xa')).toBeInTheDocument();
-      expect(screen.getByText('rev 4')).toBeInTheDocument();
       expect(screen.getByText('Sẵn sàng')).toBeInTheDocument();
+      expect(screen.getByText('Phân tích nhân vật')).toBeInTheDocument();
     });
   });
 
@@ -209,6 +209,149 @@ describe('DocumentEditorPage', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Xuất bản tài liệu (Export Document)')).toBeInTheDocument();
+    });
+  });
+
+  it('shows error state and prevents autosave when content is null', async () => {
+    vi.mocked(teacherDocumentsService.getDocument).mockResolvedValueOnce({
+      id: 'doc-null',
+      title: 'Tài liệu lỗi R2',
+      description: null,
+      revision: 1,
+      mimeType: 'application/vnd.tiptap+json',
+      type: 'STRUCTURED_NOTE',
+      status: 'PUBLISHED',
+      sizeBytes: 0,
+      ownerId: 't-1',
+      categoryId: null,
+      content: null,
+      createdAt: '2026-10-26',
+      updatedAt: '2026-10-26',
+    });
+
+    renderWithRouter(['/teacher/documents/doc-null/edit']);
+
+    await waitFor(() => {
+      expect(screen.getByText('Không thể tải nội dung văn bản')).toBeInTheDocument();
+      expect(screen.getByText(/Để bảo vệ dữ liệu gốc và tránh ghi đè/i)).toBeInTheDocument();
+    });
+
+    // Editor không được mount và autosave không được kích hoạt
+    expect(screen.queryByText('Sẵn sàng')).not.toBeInTheDocument();
+    expect(teacherDocumentsService.updateContent).not.toHaveBeenCalled();
+  });
+
+  it('shows error state when API fails and does not render editor or autosave', async () => {
+    vi.mocked(teacherDocumentsService.getDocument).mockRejectedValueOnce(
+      new Error('Mạng bị gián đoạn'),
+    );
+
+    renderWithRouter(['/teacher/documents/doc-err/edit']);
+
+    await waitFor(() => {
+      expect(screen.getByText('Không thể tải nội dung tài liệu')).toBeInTheDocument();
+      expect(screen.getByText('Mạng bị gián đoạn')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText('Sẵn sàng')).not.toBeInTheDocument();
+    expect(teacherDocumentsService.updateContent).not.toHaveBeenCalled();
+  });
+
+  it('shows error state when content is invalid Tiptap JSON schema', async () => {
+    vi.mocked(teacherDocumentsService.getDocument).mockResolvedValueOnce({
+      id: 'doc-invalid',
+      title: 'Tài liệu JSON hỏng',
+      description: null,
+      revision: 1,
+      mimeType: 'application/vnd.tiptap+json',
+      type: 'STRUCTURED_NOTE',
+      status: 'PUBLISHED',
+      sizeBytes: 50,
+      ownerId: 't-1',
+      categoryId: null,
+      content: { invalidKey: 'not a doc' } as any,
+      createdAt: '2026-10-26',
+      updatedAt: '2026-10-26',
+    });
+
+    renderWithRouter(['/teacher/documents/doc-invalid/edit']);
+
+    await waitFor(() => {
+      expect(screen.getByText('Định dạng dữ liệu không hợp lệ')).toBeInTheDocument();
+    });
+
+    expect(teacherDocumentsService.updateContent).not.toHaveBeenCalled();
+  });
+
+  it('does not autosave on mount while loading initial content', async () => {
+    vi.mocked(teacherDocumentsService.getDocument).mockResolvedValueOnce({
+      id: 'doc-no-autosave-mount',
+      title: 'Tài liệu kiểm tra autosave',
+      description: null,
+      revision: 2,
+      mimeType: 'application/vnd.tiptap+json',
+      type: 'STRUCTURED_NOTE',
+      status: 'PUBLISHED',
+      sizeBytes: 120,
+      ownerId: 't-1',
+      categoryId: null,
+      content: {
+        type: 'doc',
+        content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Nội dung nguyên bản' }] }],
+      },
+      createdAt: '2026-10-26',
+      updatedAt: '2026-10-26',
+    });
+
+    renderWithRouter(['/teacher/documents/doc-no-autosave-mount/edit']);
+
+    await waitFor(() => {
+      expect(screen.getByText('Nội dung nguyên bản')).toBeInTheDocument();
+      expect(screen.getByText('Sẵn sàng')).toBeInTheDocument();
+    });
+
+    // Không được gọi updateContent trong lúc mount và nạp initialContent
+    expect(teacherDocumentsService.updateContent).not.toHaveBeenCalled();
+  });
+
+  it('handles slow API with skeleton before content is ready', async () => {
+    let resolveDoc!: (val: any) => void;
+    const slowPromise = new Promise((resolve) => {
+      resolveDoc = resolve;
+    });
+
+    vi.mocked(teacherDocumentsService.getDocument).mockReturnValueOnce(slowPromise as any);
+
+    renderWithRouter(['/teacher/documents/doc-slow/edit']);
+
+    // Trong khi API chưa trả về, không có editor hoặc nút Lưu
+    expect(screen.queryByText('Sẵn sàng')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Lưu$/i })).not.toBeInTheDocument();
+
+    // Giả lập API phản hồi thành công sau độ trễ
+    resolveDoc({
+      id: 'doc-slow',
+      title: 'Tài liệu tải chậm',
+      description: null,
+      revision: 1,
+      mimeType: 'application/vnd.tiptap+json',
+      type: 'STRUCTURED_NOTE',
+      status: 'PUBLISHED',
+      sizeBytes: 150,
+      ownerId: 't-1',
+      categoryId: null,
+      content: {
+        type: 'doc',
+        content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Nội dung sau khi tải chậm' }] }],
+      },
+      createdAt: '2026-10-26',
+      updatedAt: '2026-10-26',
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Nội dung sau khi tải chậm')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('Tài liệu tải chậm')).toBeInTheDocument();
+      expect(screen.getByText('Sẵn sàng')).toBeInTheDocument();
     });
   });
 });
