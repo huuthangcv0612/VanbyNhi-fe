@@ -11,13 +11,13 @@ export function AppLayout() {
   const location = useLocation();
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 antialiased selection:bg-amber-200 selection:text-amber-900">
+    <div className="min-h-screen bg-slate-50 text-slate-900 antialiased selection:bg-amber-200 selection:text-amber-900 overflow-x-hidden w-full">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <div className="lg:pl-64 flex flex-col min-h-screen">
+      <div className="lg:pl-64 flex flex-col min-h-screen min-w-0">
         <Topbar onOpenSidebar={() => setSidebarOpen(true)} />
 
-        <main className="flex-1 p-3.5 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto pb-24 lg:pb-8">
+        <main className="flex-1 p-3.5 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto pb-[calc(6.5rem+env(safe-area-inset-bottom,0px))] lg:pb-8 min-w-0">
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}

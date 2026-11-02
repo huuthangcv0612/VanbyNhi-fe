@@ -225,11 +225,11 @@ export function StudentClassDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Cột chính: Tab Lịch học / Tài liệu */}
         <div className="lg:col-span-2 space-y-4">
-          <div className="flex items-center gap-3 border-b border-slate-200">
+          <div className="flex items-center gap-3 border-b border-slate-200 overflow-x-auto scrollbar-none overscroll-x-contain">
             <button
               type="button"
               onClick={() => setActiveTab('sessions')}
-              className={`flex items-center gap-2 pb-3 px-1 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
+              className={`flex items-center gap-2 pb-3 px-1 text-sm font-semibold border-b-2 transition-all cursor-pointer whitespace-nowrap min-h-[44px] ${
                 activeTab === 'sessions'
                   ? 'border-amber-700 text-amber-800'
                   : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
@@ -242,7 +242,7 @@ export function StudentClassDetailPage() {
             <button
               type="button"
               onClick={() => setActiveTab('materials')}
-              className={`flex items-center gap-2 pb-3 px-1 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
+              className={`flex items-center gap-2 pb-3 px-1 text-sm font-semibold border-b-2 transition-all cursor-pointer whitespace-nowrap min-h-[44px] ${
                 activeTab === 'materials'
                   ? 'border-amber-700 text-amber-800'
                   : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'

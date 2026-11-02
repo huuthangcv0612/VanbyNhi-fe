@@ -54,7 +54,7 @@ export function Modal({
     <AnimatePresence>
       {isOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
+          className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-6 overflow-y-auto overscroll-contain"
           role="dialog"
           aria-modal="true"
           aria-labelledby="modal-title"
@@ -77,16 +77,16 @@ export function Modal({
             exit={{ opacity: 0, scale: 0.95, y: 12 }}
             transition={appleSpring}
             className={cn(
-              'relative w-full rounded-2xl sm:rounded-3xl bg-white p-5 sm:p-6 text-left shadow-2xl border border-slate-200/90 z-10 my-auto',
+              'relative w-full max-w-[calc(100vw-1.25rem)] rounded-2xl sm:rounded-3xl bg-white p-4 sm:p-6 text-left shadow-2xl border border-slate-200/90 z-10 my-auto',
               maxWidthStyles[maxWidth],
               className,
             )}
           >
             <div className="flex items-start justify-between gap-3 pb-3 border-b border-slate-100">
-              <div className="pr-2">
+              <div className="pr-2 min-w-0 flex-1">
                 <h3
                   id="modal-title"
-                  className="text-base sm:text-lg font-bold leading-6 text-slate-900 font-serif"
+                  className="text-base sm:text-lg font-bold leading-6 text-slate-900 font-serif truncate sm:whitespace-normal"
                 >
                   {title}
                 </h3>
@@ -100,18 +100,18 @@ export function Modal({
                 icon={<X className="w-4 h-4" />}
                 aria-label="Đóng"
                 variant="ghost"
-                size="sm"
+                size="md"
                 onClick={onClose}
-                className="text-slate-400 hover:text-slate-700 hover:bg-slate-100 -mr-1 -mt-1"
+                className="text-slate-400 hover:text-slate-700 hover:bg-slate-100 -mr-1.5 -mt-1.5 min-h-[44px] min-w-[44px]"
               />
             </div>
 
-            <div className="mt-4 max-h-[calc(85vh-140px)] overflow-y-auto pr-1">
+            <div className="mt-4 max-h-[min(76vh,calc(100dvh-120px))] overflow-y-auto overscroll-contain pr-1">
               {children}
             </div>
 
             {footer && (
-              <div className="mt-6 flex flex-wrap items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+              <div className="mt-5 sm:mt-6 flex flex-col-reverse sm:flex-row sm:items-center justify-end gap-2 sm:gap-2.5 pt-3 border-t border-slate-100">
                 {footer}
               </div>
             )}

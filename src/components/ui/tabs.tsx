@@ -46,7 +46,7 @@ export function SegmentedTabs<T extends string = string>({
     <div
       role="tablist"
       className={cn(
-        'inline-flex items-center gap-1 rounded-2xl bg-slate-100/90 p-1 border border-slate-200/60 overflow-x-auto max-w-full scrollbar-none',
+        'inline-flex items-center gap-1 rounded-2xl bg-slate-100/90 p-1 border border-slate-200/60 overflow-x-auto max-w-full scrollbar-none overscroll-x-contain',
         sizeStyles[size],
         className,
       )}

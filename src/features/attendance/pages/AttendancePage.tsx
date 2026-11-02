@@ -456,8 +456,8 @@ export function AttendancePage() {
       {activeTab === 'overview' && (
         <div className="space-y-6">
           {/* Quick Metrics */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3">
+            <div className="rounded-2xl border border-slate-200 bg-white p-3 sm:p-4 shadow-xs">
               <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Tổng lượt ghi</p>
               <p className="text-2xl font-bold text-slate-900 mt-1">
                 {summaryData?.totalRecords ?? 0}

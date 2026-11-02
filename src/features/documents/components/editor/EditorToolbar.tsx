@@ -64,7 +64,7 @@ export function EditorToolbar({ editor, disabled }: EditorToolbarProps) {
     }`;
 
   return (
-    <div className="flex items-center gap-1 p-1.5 sm:p-2 bg-white/95 backdrop-blur-sm border-b border-slate-200 overflow-x-auto scrollbar-none sticky top-0 z-20">
+    <div className="flex items-center gap-1 p-1.5 sm:p-2 bg-white/95 backdrop-blur-sm border-b border-slate-200 overflow-x-auto scrollbar-none overscroll-x-contain sticky top-0 z-20 max-w-full">
       {/* Undo / Redo */}
       <div className="flex items-center gap-0.5 pr-1 border-r border-slate-200 shrink-0">
         <button

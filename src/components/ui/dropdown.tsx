@@ -28,7 +28,7 @@ export function Dropdown({
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       if (
         containerRef.current &&
         !containerRef.current.contains(event.target as Node)
@@ -45,10 +45,12 @@ export function Dropdown({
 
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
       document.addEventListener('keydown', handleKeyDown);
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [isOpen]);
@@ -83,7 +85,7 @@ export function Dropdown({
               transformOrigin: align === 'right' ? 'top right' : 'top left',
             }}
             className={cn(
-              'absolute z-50 mt-2 w-56 rounded-2xl bg-white/95 p-1.5 shadow-xl border border-slate-200/80 backdrop-blur-md ring-1 ring-black/5 focus:outline-none',
+              'absolute z-50 mt-2 w-56 max-w-[calc(100vw-1.5rem)] rounded-2xl bg-white/95 p-1.5 shadow-xl border border-slate-200/80 backdrop-blur-md ring-1 ring-black/5 focus:outline-none',
               align === 'right' ? 'right-0' : 'left-0',
             )}
             role="menu"
@@ -110,7 +112,7 @@ export function Dropdown({
                     item.onClick();
                   }}
                   className={cn(
-                    'flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs sm:text-sm text-left transition-colors cursor-pointer select-none',
+                    'flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs sm:text-sm text-left transition-colors cursor-pointer select-none min-h-[40px] sm:min-h-[36px]',
                     item.danger
                       ? 'text-rose-600 hover:bg-rose-50/80 hover:text-rose-700 active:bg-rose-100'
                       : 'text-slate-700 hover:bg-slate-100/80 hover:text-slate-900 active:bg-slate-200/70',

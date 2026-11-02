@@ -110,9 +110,9 @@ export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>
         {editable && <EditorToolbar editor={editor} disabled={!editable} />}
 
         {/* Paper Canvas (A4 style page on desktop) */}
-        <div className="flex-1 w-full py-4 sm:py-8 px-2 sm:px-4 flex justify-center">
-          <div className="w-full max-w-4xl min-h-[960px] bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 sm:p-12 md:p-16 transition-shadow focus-within:shadow-md">
-            <EditorContent editor={editor} className="prose-content min-h-[750px]" />
+        <div className="flex-1 w-full py-3 sm:py-8 px-1.5 sm:px-4 flex justify-center">
+          <div className="w-full max-w-4xl min-h-[960px] bg-white rounded-xl sm:rounded-2xl shadow-sm border border-slate-200/80 p-3.5 sm:p-10 md:p-16 transition-shadow focus-within:shadow-md">
+            <EditorContent editor={editor} className="prose-content min-h-[750px] max-w-full overflow-x-auto" />
           </div>
         </div>
       </div>

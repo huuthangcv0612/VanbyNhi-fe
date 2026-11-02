@@ -1,4 +1,4 @@
-import { Bell, User as UserIcon, LogOut, Shield } from 'lucide-react';
+import { Bell, User as UserIcon, LogOut, Shield, Menu } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Breadcrumbs } from './Breadcrumbs';
 import { Dropdown } from '@/components/ui/dropdown';
@@ -10,7 +10,7 @@ export interface TopbarProps {
   onOpenSidebar?: () => void;
 }
 
-export function Topbar({ onOpenSidebar: _onOpenSidebar }: TopbarProps) {
+export function Topbar({ onOpenSidebar }: TopbarProps) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -23,9 +23,21 @@ export function Topbar({ onOpenSidebar: _onOpenSidebar }: TopbarProps) {
         : '/student/dashboard';
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 w-full items-center justify-between border-b border-slate-200/80 bg-white/85 px-3 sm:px-6 backdrop-blur-md transition-all">
+    <header className="sticky top-0 z-20 flex h-16 w-full items-center justify-between border-b border-slate-200/80 bg-white/85 px-3 sm:px-6 backdrop-blur-md transition-all pt-safe">
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-        {/* Mobile & Tablet Brand (replaces hamburger + breadcrumbs) */}
+        {/* Mobile & Tablet menu toggle button */}
+        {onOpenSidebar && (
+          <IconButton
+            icon={<Menu className="w-5 h-5 text-slate-700" />}
+            aria-label="Mở thanh điều hướng"
+            variant="ghost"
+            size="md"
+            onClick={onOpenSidebar}
+            className="lg:hidden text-slate-600 hover:text-slate-900 min-h-[44px] min-w-[44px]"
+          />
+        )}
+
+        {/* Mobile & Tablet Brand */}
         <Link
           to={homePath}
           className="flex lg:hidden items-center gap-2 shrink-0 cursor-pointer"

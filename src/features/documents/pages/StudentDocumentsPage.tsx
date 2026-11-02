@@ -207,7 +207,7 @@ export function StudentDocumentsPage() {
             </div>
 
             {/* Horizontal class pills */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin overscroll-x-contain max-w-full">
               {enrolledClasses.map((item) => {
                 const isSelected = item.class.id === currentClassId;
                 return (

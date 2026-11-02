@@ -661,7 +661,7 @@ export function TeacherDocumentsPage() {
                       }`}
                     >
                       {/* Top row: Checkbox, Badge, Title, Actions */}
-                      <div className="flex items-start justify-between gap-3">
+                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                         <div className="flex items-start gap-3 min-w-0 flex-1">
                           {/* Multi-select Checkbox */}
                           <button
@@ -740,7 +740,7 @@ export function TeacherDocumentsPage() {
                         </div>
 
                         {/* Action buttons */}
-                        <div className="flex items-center gap-1 shrink-0">
+                        <div className="flex items-center justify-end gap-1 shrink-0 flex-wrap pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
                           {doc.type === 'STRUCTURED_NOTE' ? (
                             <Button
                               variant="primary"

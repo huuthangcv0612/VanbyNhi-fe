@@ -56,7 +56,7 @@ export function BottomNav({ onOpenMenu }: BottomNavProps) {
   return (
     <nav
       aria-label="Điều hướng nhanh trên thiết bị di động"
-      className="lg:hidden fixed bottom-3.5 sm:bottom-5 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-1.75rem)] max-w-sm sm:max-w-md"
+      className="lg:hidden fixed bottom-[max(0.875rem,calc(0.5rem+env(safe-area-inset-bottom,0px)))] sm:bottom-5 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-1.75rem)] max-w-sm sm:max-w-md select-none"
     >
       {/* Floating water bubble pill container */}
       <div className="relative flex items-center justify-between p-1.5 rounded-full bg-white/85 backdrop-blur-2xl border border-white/80 shadow-[0_12px_36px_-6px_rgba(0,0,0,0.14),0_4px_16px_rgba(0,0,0,0.06)] ring-1 ring-black/5">

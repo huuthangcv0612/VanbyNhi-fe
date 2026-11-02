@@ -40,21 +40,21 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-linear-to-b from-amber-50/50 via-slate-50 to-slate-100">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center px-4">
-        <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-700 text-white shadow-md shadow-amber-900/10 mb-4">
-          <BookOpen className="w-7 h-7" />
+    <div className="min-h-screen flex flex-col justify-center py-8 sm:py-12 px-3 sm:px-6 lg:px-8 bg-linear-to-b from-amber-50/50 via-slate-50 to-slate-100">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center px-2 sm:px-4">
+        <div className="inline-flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl bg-amber-700 text-white shadow-md shadow-amber-900/10 mb-3 sm:mb-4">
+          <BookOpen className="w-6 h-6 sm:w-7 sm:h-7" />
         </div>
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 font-serif">
           VanbyNhi
         </h1>
-        <p className="mt-2 text-sm text-slate-600">
+        <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-slate-600">
           Nền tảng Quản lý & Học tập Văn học Việt Nam
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4">
-        <div className="bg-white py-8 px-6 sm:px-10 shadow-sm border border-slate-200/80 rounded-2xl">
+      <div className="mt-6 sm:mt-8 sm:mx-auto sm:w-full sm:max-w-md px-2 sm:px-4">
+        <div className="bg-white py-6 sm:py-8 px-4 sm:px-10 shadow-sm border border-slate-200/80 rounded-2xl">
           <div className="mb-6">
             <h2 className="text-lg font-semibold text-slate-800">Đăng nhập tài khoản</h2>
             <p className="text-xs text-slate-500 mt-0.5">

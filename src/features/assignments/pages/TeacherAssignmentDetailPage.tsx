@@ -7,7 +7,6 @@ import {
   RefreshCw,
   Users,
 } from 'lucide-react';
-import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -179,13 +178,17 @@ export function TeacherAssignmentDetailPage() {
           <span>Quay lại danh sách bài tập</span>
         </Link>
 
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <PageHeader
-            title={assignment?.title || 'Chi tiết bài tập'}
-            description={`Lớp: ${assignment?.class?.name || '...'}`}
-          />
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-slate-200/80">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 font-serif">
+              {assignment?.title || 'Chi tiết bài tập'}
+            </h1>
+            <p className="mt-1 text-xs sm:text-sm text-slate-500 leading-relaxed">
+              Lớp: {assignment?.class?.name || '...'}
+            </p>
+          </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Button
               type="button"
               variant="outline"

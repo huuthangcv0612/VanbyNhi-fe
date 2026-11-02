@@ -66,7 +66,7 @@ export function VersionHistoryDrawer({
       {/* Drawer panel */}
       <div className="fixed inset-y-0 right-0 max-w-md w-full bg-white shadow-2xl z-50 flex flex-col border-l border-slate-200">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-slate-50">
+        <div className="flex items-center justify-between p-4 pt-[max(1rem,env(safe-area-inset-top,0px))] border-b border-slate-200 bg-slate-50">
           <div className="flex items-center gap-2">
             <div className="p-2 rounded-xl bg-amber-100 text-amber-800">
               <History className="w-5 h-5" />
@@ -83,14 +83,15 @@ export function VersionHistoryDrawer({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-200/60 cursor-pointer"
+            className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-200/60 cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
+            aria-label="Đóng lịch sử phiên bản"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Content list */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        <div className="flex-1 overflow-y-auto p-4 space-y-3 pb-[max(1rem,env(safe-area-inset-bottom,0px))]">
           {isLoading ? (
             <div className="space-y-3">
               {[1, 2, 3, 4].map((i) => (

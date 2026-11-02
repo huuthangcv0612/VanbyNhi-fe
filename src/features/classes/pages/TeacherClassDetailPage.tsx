@@ -499,7 +499,7 @@ export function TeacherClassDetailPage() {
       )}
 
       {/* Thông tin mã tham gia & Thống kê nhanh */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Card Mã tham gia */}
         <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-4 shadow-xs">
           <p className="text-xs font-bold text-amber-800 uppercase tracking-wider mb-1">
@@ -592,12 +592,12 @@ export function TeacherClassDetailPage() {
       </div>
 
       {/* Tabs navigation */}
-      <div className="border-b border-slate-200">
-        <nav className="flex space-x-6">
+      <div className="border-b border-slate-200 overflow-x-auto scrollbar-none overscroll-x-contain">
+        <nav className="flex space-x-4 sm:space-x-6 min-w-max pb-px">
           <button
             type="button"
             onClick={() => setActiveTab('members')}
-            className={`py-3 text-sm font-medium border-b-2 transition-colors cursor-pointer flex items-center gap-2 ${
+            className={`py-3 text-sm font-medium border-b-2 transition-colors cursor-pointer flex items-center gap-2 whitespace-nowrap min-h-[44px] ${
               activeTab === 'members'
                 ? 'border-amber-600 text-amber-900 font-semibold'
                 : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'

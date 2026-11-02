@@ -90,7 +90,7 @@ export function MonthView({
               }}
               onDoubleClick={() => onCreateEventOnDate(day)}
               className={cn(
-                'min-h-[105px] sm:min-h-[125px] lg:min-h-[140px] p-1.5 sm:p-2 bg-white flex flex-col justify-between transition-colors relative group',
+                'min-h-[48px] sm:min-h-[125px] lg:min-h-[140px] p-1 sm:p-2 bg-white flex flex-col justify-between transition-colors relative group cursor-pointer',
                 !isCurrentMonth && 'bg-slate-50/60 text-slate-400',
                 isSelectedMobile && 'ring-2 ring-amber-500 sm:ring-0',
               )}

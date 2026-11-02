@@ -62,7 +62,7 @@ export function EligibleStudentsTable({
           />
         </div>
 
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none overscroll-x-contain">
           {[
             { key: 'ALL', label: 'Tất cả' },
             { key: 'NOT_SUBMITTED', label: 'Chưa nộp' },
@@ -75,7 +75,7 @@ export function EligibleStudentsTable({
               key={f.key}
               type="button"
               onClick={() => setStatusFilter(f.key)}
-              className={`px-2.5 py-1 rounded-lg text-xs font-medium cursor-pointer transition-colors whitespace-nowrap ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-medium cursor-pointer transition-colors whitespace-nowrap min-h-[36px] sm:min-h-[30px] ${
                 statusFilter === f.key
                   ? 'bg-amber-600 text-white shadow-2xs'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'

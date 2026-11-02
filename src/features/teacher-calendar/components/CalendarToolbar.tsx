@@ -63,7 +63,7 @@ export function CalendarToolbar({
             <button
               type="button"
               onClick={onPrev}
-              className="p-1 rounded-md text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-1 focus:ring-amber-500 cursor-pointer"
+              className="p-1.5 sm:p-1 rounded-md text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-1 focus:ring-amber-500 cursor-pointer min-h-[38px] min-w-[38px] flex items-center justify-center"
               aria-label="Thời gian trước"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -71,7 +71,7 @@ export function CalendarToolbar({
             <button
               type="button"
               onClick={onNext}
-              className="p-1 rounded-md text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-1 focus:ring-amber-500 cursor-pointer"
+              className="p-1.5 sm:p-1 rounded-md text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-1 focus:ring-amber-500 cursor-pointer min-h-[38px] min-w-[38px] flex items-center justify-center"
               aria-label="Thời gian kế tiếp"
             >
               <ChevronRight className="w-4 h-4" />
@@ -158,7 +158,7 @@ export function CalendarToolbar({
             value={searchQuery}
             onChange={(e) => onSearchQueryChange(e.target.value)}
             placeholder="Tìm kiếm ca dạy, địa chỉ..."
-            className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-slate-300 bg-slate-50/50 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white"
+            className="w-full pl-9 pr-3 py-2 sm:py-1.5 text-base sm:text-xs rounded-lg border border-slate-300 bg-slate-50/50 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white min-h-[42px] sm:min-h-0"
           />
         </div>
 

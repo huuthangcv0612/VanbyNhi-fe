@@ -117,11 +117,11 @@ export function TeacherOnlineClassroomPage() {
 
       {/* 3. Navigation Tabs Workspace */}
       <div className="bg-white border border-slate-200 rounded-2xl p-2 shadow-xs">
-        <div className="flex items-center gap-1.5 overflow-x-auto">
+        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none overscroll-x-contain max-w-full pb-1">
           <button
             type="button"
             onClick={() => setActiveTab('attendance')}
-            className={`py-2.5 px-4 rounded-xl text-xs font-semibold flex items-center gap-2 whitespace-nowrap transition-all cursor-pointer ${
+            className={`py-2.5 px-4 rounded-xl text-xs font-semibold flex items-center gap-2 whitespace-nowrap transition-all cursor-pointer min-h-[44px] ${
               activeTab === 'attendance'
                 ? 'bg-amber-900 text-white shadow-2xs'
                 : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
