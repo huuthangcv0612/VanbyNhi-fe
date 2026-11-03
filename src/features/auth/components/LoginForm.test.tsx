@@ -97,4 +97,28 @@ describe('LoginForm', () => {
       configurable: true,
     });
   });
+
+  it('renders Google login button and navigates to Google authorization url on click', async () => {
+    const originalLocation = window.location;
+    Object.defineProperty(window, 'location', {
+      value: { ...originalLocation, href: '' },
+      writable: true,
+      configurable: true,
+    });
+
+    render(<LoginForm />);
+
+    const googleBtn = screen.getByRole('button', { name: /đăng nhập bằng google/i });
+    expect(googleBtn).toBeInTheDocument();
+
+    await userEvent.click(googleBtn);
+
+    expect(window.location.href).toContain('/google/login');
+
+    Object.defineProperty(window, 'location', {
+      value: originalLocation,
+      writable: true,
+      configurable: true,
+    });
+  });
 });

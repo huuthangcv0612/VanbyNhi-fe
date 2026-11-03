@@ -63,13 +63,16 @@ export function TeacherGoogleSettingsPage() {
         <GoogleAccountCard />
 
         <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-3">
-          <h3 className="text-sm font-bold text-slate-900">Về tích hợp Google Meet trên VanbyNhi</h3>
+          <h3 className="text-sm font-bold text-slate-900">Về tích hợp Google Meet & Quyền lợi cuộc họp</h3>
           <ul className="space-y-2 text-xs text-slate-600 list-disc list-inside">
             <li>
-              Hệ thống tự động sử dụng tài khoản Google đã liên kết để khởi tạo phòng học trực tuyến (Google Meet Space) mỗi khi bạn tạo lớp học mới.
+              Hệ thống tự động sử dụng tài khoản Google đã liên kết của từng giáo viên để khởi tạo phòng học trực tuyến (Google Meet Space) mỗi khi tạo lớp học mới.
             </li>
             <li>
               Giáo viên là chủ phòng (host) và có đầy đủ quyền quản lý người tham gia, phê duyệt học sinh ngoài tổ chức và chia sẻ màn hình.
+            </li>
+            <li>
+              <strong className="text-slate-800">Quyền lợi và thời lượng cuộc họp:</strong> Thời lượng cuộc họp tuân thủ hoàn toàn theo gói tài khoản Google của chính quý thầy/cô (tài khoản cá nhân miễn phí giới hạn 60 phút khi có từ 3 người tham gia; tài khoản Google Workspace for Education, Business hoặc Google One Premium hỗ trợ cuộc họp liên tục lên tới 24 giờ). VanbyNhi không can thiệp hay xóa bỏ giới hạn thời gian mặc định của Google.
             </li>
             <li>
               Học sinh trong lớp chỉ có thể lấy liên kết Google Meet khi đã là thành viên chính thức và đúng khung giờ học quy định (mở trước 15 phút).

@@ -19,6 +19,9 @@ const RegisterPage = lazy(() =>
 const ZaloCallbackPage = lazy(() =>
   import('@/features/auth/pages/ZaloCallbackPage').then((m) => ({ default: m.ZaloCallbackPage })),
 );
+const GoogleCallbackPage = lazy(() =>
+  import('@/features/auth/pages/GoogleCallbackPage').then((m) => ({ default: m.GoogleCallbackPage })),
+);
 const ForbiddenPage = lazy(() =>
   import('@/pages/ForbiddenPage').then((m) => ({ default: m.ForbiddenPage })),
 );
@@ -175,6 +178,14 @@ const router = createBrowserRouter([
     element: (
       <SuspenseWrapper>
         <ZaloCallbackPage />
+      </SuspenseWrapper>
+    ),
+  },
+  {
+    path: '/auth/google/callback',
+    element: (
+      <SuspenseWrapper>
+        <GoogleCallbackPage />
       </SuspenseWrapper>
     ),
   },

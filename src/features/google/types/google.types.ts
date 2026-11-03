@@ -1,3 +1,5 @@
+import type { User, AuthTokens } from '@/types/auth.types';
+
 export type GoogleConnectionStatus = 'CONNECTED' | 'DISCONNECTED' | 'NEEDS_REAUTH';
 
 export interface GoogleConnectionResponse {
@@ -14,3 +16,27 @@ export interface GoogleConnectResponse {
 export interface GoogleDisconnectResponse {
   message: string;
 }
+
+export interface GoogleExchangePayload {
+  ticket: string;
+}
+
+export interface GoogleExchangeResponse {
+  message: string;
+  isLinked: boolean;
+  user: User;
+  tokens: AuthTokens;
+}
+
+export interface GoogleLinkPayload {
+  linkTicket: string;
+  identifier: string;
+  password: string;
+}
+
+export interface GoogleLinkResponse {
+  message: string;
+  user: User;
+  tokens: AuthTokens;
+}
+

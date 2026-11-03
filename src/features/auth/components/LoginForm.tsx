@@ -5,7 +5,9 @@ import { z } from 'zod';
 import { Eye, EyeOff, Lock, User as UserIcon, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { authService } from '@/features/auth/services/auth.service';
+import { googleService } from '@/features/google/services/google.service';
 import { ZaloIcon } from '@/features/auth/components/ZaloIcon';
+import { GoogleIcon } from '@/features/google/components/GoogleIcon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { getApiErrorMessage } from '@/lib/api-client';
@@ -124,7 +126,20 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         </div>
       </div>
 
-      <div>
+      <div className="space-y-2.5">
+        <Button
+          type="button"
+          variant="outline"
+          size="md"
+          className="w-full border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-700 font-medium flex items-center justify-center gap-2.5 transition-colors shadow-xs"
+          onClick={() => {
+            window.location.href = googleService.getLoginUrl();
+          }}
+        >
+          <GoogleIcon className="w-5 h-5 shrink-0" />
+          <span>Đăng nhập bằng Google</span>
+        </Button>
+
         <Button
           type="button"
           variant="outline"
